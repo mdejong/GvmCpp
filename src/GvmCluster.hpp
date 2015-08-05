@@ -11,9 +11,9 @@
 // http://www.apache.org/licenses/LICENSE-2.0
 //
 
-#import <vector>
+#import "GvmCommon.hpp"
 
-using namespace std;
+#import <vector>
 
 namespace Gvm {
 
@@ -43,7 +43,7 @@ namespace Gvm {
     
     // The pairings of this cluster with all other clusters.
     
-    std::vector<GvmCluster<S,K,P>> pairs;
+    //std::vector<GvmClusterPair<S,K,P>> pairs;
     
     // Whether this cluster is in the process of being removed.
     
@@ -59,11 +59,11 @@ namespace Gvm {
     
     // The mass-weighted coordinate sum.
     
-    std::vector<double> m1;
+    std::vector<P> m1;
 
     // The mass-weighted coordinate-square sum.
 
-    std::vector<double> m2;
+    std::vector<P> m2;
 
     // The computed variance of this cluster.
     
@@ -103,14 +103,14 @@ namespace Gvm {
     
     GvmCluster<S,K,P>(GvmCluster<S,K,P> &clusters)
     {
-//      this->clusters = clusters;
-//      removed = false;
-//      count = 0;
-//      m0 = 0.0;
-//      m1 = clusters.space.newOrigin();
-//      m2 = clusters.space.newOrigin();
-//      pairs = vector<GvmClusterPair>(clusters.size());
-////      new GvmClusterPair[clusters.capacity];
+      this->clusters = clusters;
+      removed = false;
+      count = 0;
+      m0 = 0.0;
+      m1 = clusters.space.newOrigin();
+      m2 = clusters.space.newOrigin();
+//      pairs = vector<GvmClusterPair<S,K,P>>(clusters.size());
+//      new GvmClusterPair[clusters.capacity];
 //      update();
     }
 
