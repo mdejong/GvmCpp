@@ -13,9 +13,6 @@
 
 #import "GvmCommon.hpp"
 
-#import <vector>
-#import <sstream>
-
 #import "GvmSpace.hpp"
 
 #import <tgmath.h>
@@ -197,7 +194,7 @@ namespace Gvm {
       return sum;
     }
 
-    string toString(std::vector<P> &pt) {
+    std::string toString(std::vector<P> &pt) {
       std::stringstream sb;
       
       for (int i = 0; i < dimensions; i++) {

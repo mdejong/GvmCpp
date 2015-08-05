@@ -12,4 +12,13 @@
 //
 
 #import <vector>
+
+#import <sstream>
+
 #import <assert.h>
+
+namespace Gvm {
+  template<typename S, typename K, typename P> class GvmCluster;
+  template<typename S, typename K, typename P> class GvmClusterPair;
+  template<typename S, typename K, typename P> class GvmClusters;
+}

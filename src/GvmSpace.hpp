@@ -13,10 +13,6 @@
 
 #import "GvmCommon.hpp"
 
-#import <vector>
-
-using namespace std;
-
 namespace Gvm {
 
   // GvmSpace is an abstract class that defines how calculations of
@@ -35,11 +31,33 @@ namespace Gvm {
     
     virtual std::vector<P> newOrigin();
     
-    virtual std::vector<P> newCopy(P pt);
+    virtual std::vector<P> newCopy(std::vector<P> &pt);
     
-    virtual double magnitudeSqr(P pt);
+    virtual double magnitudeSqr(std::vector<P> &pt);
     
-    virtual double sum(P pt);
+    virtual double sum(std::vector<P> &pt);
+    
+    //not used directly in algorithm, but useful - override for good performance
+    
+    double magnitude(std::vector<P> &pt)
+    {
+      return sqrt(magnitudeSqr(pt));
+    }
+    
+    //not used directly in algorithm, but useful - override for good performance
+    
+    double distance(std::vector<P> &pt1, std::vector<P> &pt2)
+    {
+      std::vector<P> p = pt1.newCopy(pt1);
+      subtract(p, pt2);
+      return magnitude(p);
+    }
+    
+    virtual double variance(double m, std::vector<P> &pt, std::vector<P> &ptSqr);
+    
+    virtual double variance(double m1, std::vector<P> &pt1, std::vector<P> &ptSqr1, double m2, std::vector<P> pt2);
+    
+    virtual double variance(double m1, std::vector<P> &pt1, std::vector<P> &ptSqr1, double m2, std::vector<P> pt2, std::vector<P> &ptSqr2);
     
   }; // end class GvmSpace
 

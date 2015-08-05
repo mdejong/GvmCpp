@@ -13,8 +13,6 @@
 
 #import "GvmCommon.hpp"
 
-#import <vector>
-
 namespace Gvm {
 
   // S
@@ -39,11 +37,12 @@ namespace Gvm {
     
     // The set of clusters to which this cluster belongs
     
-    GvmCluster<S,K,P> clusters;
+    GvmClusters<S,K,P> &clusters;
     
     // The pairings of this cluster with all other clusters.
+    // Note that this is a vector of pointers to cluster pairs.
     
-    //std::vector<GvmClusterPair<S,K,P>> pairs;
+    std::vector<GvmClusterPair<S,K,P>* > pairs;
     
     // Whether this cluster is in the process of being removed.
     
@@ -101,17 +100,19 @@ namespace Gvm {
     
     // constructor
     
-    GvmCluster<S,K,P>(GvmCluster<S,K,P> &clusters)
+    GvmCluster<S,K,P>(GvmClusters<S,K,P> &inClusters)
+    : clusters(inClusters)
     {
-      this->clusters = clusters;
       removed = false;
       count = 0;
       m0 = 0.0;
       m1 = clusters.space.newOrigin();
       m2 = clusters.space.newOrigin();
-//      pairs = vector<GvmClusterPair<S,K,P>>(clusters.size());
-//      new GvmClusterPair[clusters.capacity];
-//      update();
+      
+      std::vector<GvmClusterPair<S,K,P>* > vecClusterPairPointers(clusters.capacity);
+      this->pairs = vecClusterPairPointers;
+
+      update();
     }
 
     // package methods
@@ -123,12 +124,36 @@ namespace Gvm {
     
     // Sets this cluster equal to a single point.
     
-    void set(const double m, P pt);
+    void set(const double m, std::vector<P> &pt);
+        
+    // Recompute this cluster's variance.
     
-//    private static double[] coords(Object obj) {
-//      return (double[]) obj;
-//    }
-
+    void update() {
+      //var = m0 == 0.0 ? 0.0 : clusters.space.variance(m0, m1, m2);
+    }
+    
+    // Computes this clusters variance if it were to have a new point added to it.
+    //
+    // m the mass of the point
+    // pt the coordinates of the point
+    // return the variance of this cluster inclusive of the point
+    
+    double test(double m, std::vector<P> &pt) {
+      return m0 == 0.0 && m == 0.0 ? 0.0 : clusters.space.variance(m0, m1, m2, m, pt) - var;
+    }
+    
+    // Computes the variance of a cluster that aggregated this cluster with the
+    // supplied cluster.
+    //
+    // cluster
+    // another cluster
+    // return the combined variance
+    
+    //TODO: change for consistency with other test method : return increase in variance
+    
+    double test(GvmCluster<S,K,P> &cluster) {
+      return m0 == 0.0 && cluster.m0 == 0.0 ? 0.0 : clusters.space.variance(m0, m1, m2, cluster.m0, cluster.m1, cluster.m2);
+    }
     
   }; // end class GvmCluster
 
