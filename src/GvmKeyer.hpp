@@ -50,7 +50,7 @@ namespace Gvm {
     //
     // c1 : the cluster with the greater mass
     // c2 : the cluster with the lesser mass
-    // return a key for the cluster that combines those of c1 and c2, may be null
+    // return a key for the cluster that combines those of c1 and c2, may be NULL
     
     virtual K mergeKeys(GvmCluster<S,K,P> &c1, GvmCluster<S,K,P> &c2);
     
@@ -58,7 +58,7 @@ namespace Gvm {
     //
     // cluster
     // key : the key for a newly clustered coordinate
-    // return the key to be assigned to the new cluster, may be null
+    // return the key to be assigned to the new cluster, may be NULL
 
     virtual K addKey(GvmCluster<S,K,P> &cluster, K key);
     

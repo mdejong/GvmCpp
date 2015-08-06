@@ -40,13 +40,14 @@ namespace Gvm {
 
     // Pairs is an array of pointers to GvmClusterPair objects
     
-    std::vector<GvmClusterPair<S,K,P>* > pairs;
+    std::vector<GvmClusterPair<S,K,P> > pairs;
     
     int size;
         
     GvmClusterPairs<S,K,P>(int initialCapacity)
-    : pairs(initialCapacity), size(0)
+    : size(0)
     {
+      pairs.reserve(initialCapacity);
       return;
     }
     
@@ -55,6 +56,28 @@ namespace Gvm {
     GvmClusterPairs<S,K,P>(GvmClusterPairs<S,K,P> &that) {
       pairs = that.pairs;
       size = pairs.length;
+    }
+    
+    GvmClusterPairs<S,K,P>* peek() {
+      return size == 0 ? NULL : pairs[0];
+    }
+    
+    
+    
+    bool add(GvmClusterPair<S,K,P> &e) {
+      /*
+      //if (e == null) throw new IllegalArgumentException("null pair");
+      int i = size;
+      if (i >= pairs.length) grow(i + 1);
+      size = i + 1;
+      if (i == 0) {
+        pairs[0] = e;
+        e.index = 0;
+      } else {
+        heapifyUp(i, e);
+      }
+      */
+      return true;
     }
 
   }; // end class GvmClusterPairs

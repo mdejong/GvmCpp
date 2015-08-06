@@ -42,7 +42,7 @@ namespace Gvm {
     // The pairings of this cluster with all other clusters.
     // Note that this is a vector of pointers to cluster pairs.
     
-    std::vector<GvmClusterPair<S,K,P>* > pairs;
+    std::vector<GvmClusterPair<S,K,P> > pairs;
     
     // Whether this cluster is in the process of being removed.
     
@@ -101,7 +101,7 @@ namespace Gvm {
     // constructor
     
     GvmCluster<S,K,P>(GvmClusters<S,K,P> &inClusters)
-    : clusters(inClusters)
+    : clusters(inClusters), pairs()
     {
       removed = false;
       count = 0;
@@ -109,9 +109,8 @@ namespace Gvm {
       m1 = clusters.space.newOrigin();
       m2 = clusters.space.newOrigin();
       
-      std::vector<GvmClusterPair<S,K,P>* > vecClusterPairPointers(clusters.capacity);
-      this->pairs = vecClusterPairPointers;
-
+      pairs.reserve(clusters.capacity);
+      
       update();
     }
 
@@ -123,8 +122,23 @@ namespace Gvm {
     void clear();
     
     // Sets this cluster equal to a single point.
+    // m : the mass of the point
+    // pt : the coordinates of the point
     
-    void set(const double m, std::vector<P> &pt);
+    void set(const double m, std::vector<P> &pt) {
+      if (m == 0.0) {
+        if (count != 0) {
+          clusters.space.setToOrigin(m1);
+          clusters.space.setToOrigin(m2);
+        }
+      } else {
+        clusters.space.setToScaled(m1, m, pt);
+        clusters.space.setToScaledSqr(m2, m, pt);
+      }
+      count = 1;
+      m0 = m;
+      var = 0.0;
+    }
         
     // Recompute this cluster's variance.
     

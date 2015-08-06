@@ -58,7 +58,7 @@ namespace Gvm {
     // @param c2 a cluster, not equal to c1
     
     GvmClusterPair<S,K,P>(GvmCluster<S,K,P> &inC1, GvmCluster<S,K,P> &inC2)
-    : c1(inC1), c2(inC2)
+    : c1(inC1), c2(inC2), index(0)
     {
       if (&inC1 == &inC2) {
         assert(0);
