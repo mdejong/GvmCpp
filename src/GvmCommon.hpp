@@ -19,6 +19,9 @@
 
 namespace Gvm {
   template<typename S, typename K, typename P> class GvmCluster;
-  template<typename S, typename K, typename P> class GvmClusterPair;
   template<typename S, typename K, typename P> class GvmClusters;
+  template<typename S, typename K, typename P> class GvmClusterPair;
+  template<typename S, typename K, typename P> class GvmClusterPairs;
+  template<typename S, typename K, typename P> class GvmKeyer;
+  template<typename S, typename K, typename P> class GvmDefaultKeyer;
 }

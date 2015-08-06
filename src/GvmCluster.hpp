@@ -92,7 +92,7 @@ namespace Gvm {
       return var;
     }
     
-    // The key associated with the cluster, may be null.
+    // The key associated with the cluster, may be NULL.
     
     K getKey() {
       return key;
