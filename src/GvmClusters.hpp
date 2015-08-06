@@ -66,8 +66,7 @@ namespace Gvm {
     std::unique_ptr<GvmDefaultKeyer<S,K,P> > defaultKeyerPtr;
     
     // If a specific keyer is defined instead of the
-    // default keyer then this pointer will be non-NULL
-    
+    // default keyer then this pointer will not be nullptr.
     std::unique_ptr<GvmKeyer<S,K,P> > keyerPtr;
     
     // The clusters objects.
@@ -97,7 +96,7 @@ namespace Gvm {
     space(inSpace),
     capacity(inCapacity),
     defaultKeyerPtr(new GvmDefaultKeyer<S,K,P>()),
-    keyerPtr((GvmKeyer<S,K,P>*)NULL),
+    keyerPtr(nullptr),
     pairs(capacity * (capacity-1) / 2),
     additions(0),
     count(0),
@@ -110,17 +109,17 @@ namespace Gvm {
     // The keyer used to assign keys to clusters.
     
     GvmKeyer<S,K,P>* getKeyer() {
-      if (keyerPtr != NULL) {
-        return (GvmKeyer<S,K,P>*) keyerPtr.get();
+      if (keyerPtr != nullptr) {
+        return keyerPtr.get();
       } else {
-        return (GvmKeyer<S,K,P>*) defaultKeyerPtr.get();
+        return defaultKeyerPtr.get();
       }
     }
     
     // Setter for keyer property, use this method to define a new keyer instead of
     // using GvmDefaultKeyer. Note that this object will manage the lifetime of
     // the passed in pointer as a unique_ptr so call it with the result of a
-    // new operation. If NULL is passed into this method then the
+    // new operation. If nullptr is passed into this method then the
     // default keyer will be used again.
     
     void setKeyer(GvmKeyer<S,K,P> *inKeyer) {
@@ -149,14 +148,16 @@ namespace Gvm {
     //
     // m : the mass at the point
     // pt : the coordinates of the point
-    // key : the key assigned to the point
+    // key : the key assigned to the point (can be nullptr).
+    // Note that this ref is not a unique_ptr
+    // or a shared_ptr, the lifetime of this
+    // pointer must be managed by the caller.
     
-    void add(double m, std::vector<P> &pt, K key) {
+    void add(double m, std::vector<P> &pt, K* key) {
       if (m == 0.0) return; //nothing to do
       if (count < capacity) { //shortcut
         //TODO should prefer add if var comes to zero
         
-        //GvmCluster<S,K,P> cluster(*this);
         clusters.push_back(GvmCluster<S,K,P>(*this));
         GvmCluster<S,K,P> &cluster = clusters[clusters.size() - 1];
         
@@ -165,16 +166,14 @@ namespace Gvm {
         cluster.key = getKeyer()->addKey(cluster, key);
         count++;
         bound = count;
-        // FIXME: does this need std::move() ?
-        //clusters.push_back(cluster);
       } else {
         //identify cheapest merge
-        GvmCluster<S,K,P> *mergePairPtr = pairs.peek();
-        double mergeT = mergePairPtr == NULL ? std::numeric_limits<double>::max() : mergePairPtr->value;
+        GvmClusterPair<S,K,P> *mergePairPtr = pairs.peek();
+        double mergeT = mergePairPtr == nullptr ? std::numeric_limits<double>::max() : mergePairPtr->value;
         //find cheapest addition
-        GvmCluster<S,K,P> *additionCPtr = NULL;
+        GvmCluster<S,K,P> *additionCPtr = nullptr;
         double additionT = std::numeric_limits<double>::max();
-        for (int i = 0; i < clusters.length; i++) {
+        for (int i = 0; i < clusters.size(); i++) {
           GvmCluster<S,K,P> *clusterPtr = &clusters[i];
           double t = clusterPtr->test(m, pt);
           if (t < additionT) {
@@ -190,21 +189,21 @@ namespace Gvm {
           additionC.key = getKeyer()->addKey(additionC, key);
         } else {
           //choose merge
-          GvmCluster<S,K,P> &mergePair = *mergePairPtr;
-          GvmCluster<S,K,P> &c1 = mergePair.c1;
-          GvmCluster<S,K,P> &c2 = mergePair.c2;
-          if (c1.m0 < c2.m0) {
+          GvmClusterPair<S,K,P> &mergePair = *mergePairPtr;
+          GvmCluster<S,K,P> *c1 = &mergePair.c1;
+          GvmCluster<S,K,P> *c2 = &mergePair.c2;
+          if (c1->m0 < c2->m0) {
             c1 = c2;
-            c2 = mergePair.c1;
+            c2 = &mergePair.c1;
           }
-          c1.key = getKeyer()->mergeKeys(c1, c2);
-          c1.add(c2);
-          updatePairs(c1);
-          c2.set(m, pt);
-          updatePairs(c2);
+          c1->key = getKeyer()->mergeKeys(*c1, *c2);
+          c1->add(*c2);
+          updatePairs(*c1);
+          c2->set(m, pt);
+          updatePairs(*c2);
           //TODO should this pass through a method on keyer?
-          c2.key = NULL;
-          c2.key = getKeyer()->addKey(c2, key);
+          c2->key = nullptr;
+          c2->key = getKeyer()->addKey(*c2, key);
         }
       }
       additions++;
@@ -224,11 +223,38 @@ namespace Gvm {
       int c = count - 1; //index at which new pairs registered for existing clusters
       for (int i = 0; i < count; i++) {
         GvmCluster<S,K,P> &ci = clusters[i];
-        GvmClusterPair<S,K,P> pair(ci, cj);
-        ci.pairs[c] = pair;
-        cj.pairs[i] = pair;
-        pairs.add(pair);
+        
+//        GvmClusterPair<S,K,P> pair(ci, cj);
+//        ci.pairs[c] = pair;
+//        cj.pairs[i] = pair;
+//        pairs.add(pair);
+        
+        GvmClusterPair<S,K,P> &pair = pairs.add(ci, cj);
+        ci.pairs[c] = &pair;
+        cj.pairs[i] = &pair;
       }
+    }
+
+    //does not assume pairs are contiguous
+    void updatePairs(GvmCluster<S,K,P> & cluster) {
+      std::vector<GvmClusterPair<S,K,P>* > &pairs = cluster.pairs;
+      // FIXME: impl these methods
+      /*
+      //accelerated path
+      if (count == bound) {
+        int limit = count - 1;
+        for (int i = 0; i < limit; i++) {
+          this.pairs.reprioritize(pairs[i]);
+        }
+      } else {
+        int limit = bound - 1;
+        for (int i = 0; i < limit; i++) {
+          GvmClusterPair<S,K> pair = pairs[i];
+          if (pair.c1.removed || pair.c2.removed) continue;
+          this.pairs.reprioritize(pair);
+        }
+      }
+      */
     }
 
     

@@ -58,8 +58,8 @@ namespace Gvm {
       size = pairs.length;
     }
     
-    GvmClusterPairs<S,K,P>* peek() {
-      return size == 0 ? NULL : pairs[0];
+    GvmClusterPair<S,K,P>* peek() {
+      return size == 0 ? nullptr : &pairs[0];
     }
     
     
@@ -78,6 +78,13 @@ namespace Gvm {
       }
       */
       return true;
+    }
+    
+    // add cluster pair and return ref to added pair object
+    
+    GvmClusterPair<S,K,P>& add(GvmCluster<S,K,P> &c1, GvmCluster<S,K,P> &c2) {
+      pairs.push_back(GvmClusterPair<S,K,P>(c1, c2));
+      return pairs[pairs.size() - 1];
     }
 
   }; // end class GvmClusterPairs

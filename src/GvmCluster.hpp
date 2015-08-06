@@ -42,7 +42,7 @@ namespace Gvm {
     // The pairings of this cluster with all other clusters.
     // Note that this is a vector of pointers to cluster pairs.
     
-    std::vector<GvmClusterPair<S,K,P> > pairs;
+    std::vector<GvmClusterPair<S,K,P>* > pairs;
     
     // Whether this cluster is in the process of being removed.
     
@@ -68,9 +68,12 @@ namespace Gvm {
     
     double var;
 
-    // The key associated with this cluster.
+    // The key associated with this cluster (can be nullptr).
+    // Note that this ref is not a unique_ptr
+    // or a shared_ptr, the lifetime of this
+    // pointer must be managed by the caller.
     
-    K key;
+    K* key;
     
     // getters
     
@@ -92,9 +95,9 @@ namespace Gvm {
       return var;
     }
     
-    // The key associated with the cluster, may be NULL.
+    // The key associated with the cluster, may be nullptr.
     
-    K getKey() {
+    K* getKey() {
       return key;
     }
     
@@ -119,13 +122,20 @@ namespace Gvm {
     // Completely clears this cluster. All points and their associated mass is
     // removed along with any key that was assigned to the cluster,
     
-    void clear();
+    void clear() {
+      count = 0;
+      m0 = 0.0;
+      clusters.space.setToOrigin(m1);
+      clusters.space.setToOrigin(m2);
+      var = 0.0;
+      key = nullptr;
+    }
     
     // Sets this cluster equal to a single point.
     // m : the mass of the point
     // pt : the coordinates of the point
     
-    void set(const double m, std::vector<P> &pt) {
+    void set(double m, std::vector<P> &pt) {
       if (m == 0.0) {
         if (count != 0) {
           clusters.space.setToOrigin(m1);
@@ -139,11 +149,68 @@ namespace Gvm {
       m0 = m;
       var = 0.0;
     }
+
+    // Adds a point to the cluster.
+    //
+    // m : the mass of the point
+    // pt : the coordinates of the point
+    
+    void add(double m, std::vector<P> &pt) {
+      if (count == 0) {
+        set(m, pt);
+      } else {
+        count += 1;
         
+        if (m != 0.0) {
+          m0 += m;
+          clusters.space.addScaled(m1, m, pt);
+          clusters.space.addScaledSqr(m2, m, pt);
+          update();
+        }
+      }
+    }
+
+    // Sets this cluster equal to the specified cluster
+    //
+    // cluster : a cluster, not this or null
+    
+    void set(GvmCluster<S,K,P> &cluster) {
+      if (&cluster == this) {
+        assert(0);
+      }
+      
+      m0 = cluster.m0;
+      clusters.space.setTo(m1, cluster.m1);
+      clusters.space.setTo(m2, cluster.m2);
+      var = cluster.var;
+    }
+    
+    // Adds the specified cluster to this cluster.
+    //
+    // cluster : the cluster to be added
+    
+    void add(GvmCluster<S,K,P> &cluster) {
+      if (&cluster == this) {
+        assert(0);
+      }
+      if (cluster.count == 0) return; //nothing to do
+      
+      if (count == 0) {
+        set(cluster);
+      } else {
+        count += cluster.count;
+        //TODO accelerate add
+        m0 += cluster.m0;
+        clusters.space.add(m1, cluster.m1);
+        clusters.space.add(m2, cluster.m2);
+        update();
+      }
+    }
+    
     // Recompute this cluster's variance.
     
     void update() {
-      //var = m0 == 0.0 ? 0.0 : clusters.space.variance(m0, m1, m2);
+      var = m0 == 0.0 ? 0.0 : clusters.space.variance(m0, m1, m2);
     }
     
     // Computes this clusters variance if it were to have a new point added to it.

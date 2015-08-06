@@ -35,7 +35,7 @@ namespace Gvm {
   // to represent a specific kind of point.
   
   template<typename S, typename K, typename P>
-  class GvmDefaultKeyer {
+  class GvmDefaultKeyer : public GvmKeyer<S,K,P> {
   public:
     
     GvmDefaultKeyer<S,K,P>()
@@ -49,10 +49,10 @@ namespace Gvm {
     // c2 : the cluster with the lesser mass
     // return a key for the cluster that combines those of c1 and c2, may be null
     
-    K mergeKeys(GvmCluster<S,K,P> &c1, GvmCluster<S,K,P> &c2)
+    K* mergeKeys(GvmCluster<S,K,P> &c1, GvmCluster<S,K,P> &c2)
     {
-      K key = c1.getKey();
-      if (key == NULL) {
+      K* key = c1.getKey();
+      if (key == nullptr) {
         return c2.getKey();
       } else {
         return key;
@@ -65,16 +65,16 @@ namespace Gvm {
     // key : the key for a newly clustered coordinate
     // return the key to be assigned to the new cluster, may be null
 
-    K addKey(GvmCluster<S,K,P> &cluster, K key)
+    K* addKey(GvmCluster<S,K,P> &cluster, K* key)
     {
-      K k = cluster.getKey();
-      if (k == NULL) {
+      K* k = cluster.getKey();
+      if (k == nullptr) {
         return key;
       } else {
         return k;
       }
     }
     
-  }; // end class GvmKeyer
+  }; // end class GvmDefaultKeyer
 
 }
