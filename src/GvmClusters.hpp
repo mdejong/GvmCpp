@@ -123,7 +123,8 @@ namespace Gvm {
     
     void setKeyer(std::unique_ptr<GvmKeyer<S,K,P>> inKeyer) {
       keyerPtr = std::move(inKeyer);
-      if (keyerPtr) {        
+      if (keyerPtr) {
+        // inKeyer contained a unique_ptr and it was transfered to keyerPtr
       } else {
         assert(0);
       }
