@@ -38,6 +38,26 @@ namespace Gvm {
   class GvmClusterPairs {
   public:
 
+    static inline
+    int ushift_left(int n) {
+#if defined(DEBUG)
+      assert(n >= 0);
+#endif // DEBUG
+      uint32_t un = (uint32_t) n;
+      un <<= 1;
+      return un;
+    }
+    
+    static inline
+    int ushift_right(int n) {
+#if defined(DEBUG)
+      assert(n >= 0);
+#endif // DEBUG
+      uint32_t un = (uint32_t) n;
+      un >>= 1;
+      return un;
+    }
+    
     // Pairs is an array of pointers to GvmClusterPair objects
     
     std::vector<GvmClusterPair<S,K,P> > pairs;
@@ -58,17 +78,11 @@ namespace Gvm {
       size = pairs.length;
     }
     
-    GvmClusterPair<S,K,P>* peek() {
-      return size == 0 ? nullptr : &pairs[0];
-    }
-    
-    
-    
     bool add(GvmClusterPair<S,K,P> &e) {
-      /*
-      //if (e == null) throw new IllegalArgumentException("null pair");
       int i = size;
-      if (i >= pairs.length) grow(i + 1);
+      if (i >= pairs.size()) {
+        grow(i + 1);
+      }
       size = i + 1;
       if (i == 0) {
         pairs[0] = e;
@@ -76,7 +90,6 @@ namespace Gvm {
       } else {
         heapifyUp(i, e);
       }
-      */
       return true;
     }
     
@@ -87,6 +100,110 @@ namespace Gvm {
       return pairs[pairs.size() - 1];
     }
 
+    GvmClusterPair<S,K,P>* peek() {
+      return size == 0 ? nullptr : &pairs[0];
+    }
+    
+    bool remove(GvmClusterPair<S,K,P> &pair) {
+      int i = indexOf(pair);
+      if (i == -1) return false;
+      removeAt(i);
+      return true;
+    }
+    
+    void reprioritize(GvmClusterPair<S,K,P> &pair) {
+      int i = indexOf(pair);
+      if (i == -1) {
+        assert(0);
+      }
+      pair.update();
+      GvmClusterPair<S,K,P> *parent = (i == 0) ? nullptr : pairs[ ushift_right(i - 1) ];
+      if (parent != nullptr && parent->value > pair.value) {
+        heapifyUp(i, pair);
+      } else {
+        heapifyDown(i, pair);
+      }
+    }
+    
+    int getSize() {
+      return size;
+    }
+    
+    void clear() {
+      for (int i = 0; i < size; i++) {
+        GvmClusterPair<S,K,P> &e = pairs[i];
+        e.index = -1;
+        //pairs[i] = e;
+      }
+      size = 0;
+    }
+    
+    void grow(int minCapacity) {
+      if (minCapacity < 0) {
+        assert(0); // can't grow, maximum number of elements exceeded
+      }
+      int oldCapacity = pairs.size();
+      int newCapacity = ((oldCapacity < 64)? ((oldCapacity + 1) * 2): ((oldCapacity / 2) * 3));
+      // Note that capacity here is limited to 32 bit signed int range
+      if (newCapacity < 0) newCapacity = std::numeric_limits<int32_t>::max();
+      if (newCapacity < minCapacity) newCapacity = minCapacity;
+      //pairs = Arrays.copyOf(pairs, newCapacity);
+      pairs.reserve(newCapacity);
+    }
+    
+    int indexOf(GvmClusterPair<S,K,P> *pair) {
+      return pair == nullptr ? -1 : pair->index;
+    }
+    
+    GvmClusterPair<S,K,P>* removeAt(int i) {
+      int s = --size;
+      if (s == i) { // removing last element
+        pairs[i].index = -1;
+        // FIXME: remove elem at end
+        //pairs[i] = nullptr;
+      } else {
+        // FIXME: how should pair be moved in memory ?
+        GvmClusterPair<S,K,P>* moved = pairs[s];
+        //pairs[s] = nullptr;
+        moved.index = -1;
+        heapifyDown(i, moved);
+        if (pairs[i] == moved) {
+          heapifyUp(i, moved);
+          if (pairs[i] != moved) return moved;
+        }
+      }
+      return nullptr;
+    }
+    
+    void heapifyUp(int k, GvmClusterPair<S,K,P> *pair) {
+      while (k > 0) {
+        int parent = ushift_right(k - 1);
+        GvmClusterPair<S,K,P> &e = pairs[parent];
+        if (pair.value >= e.value) break;
+        pairs[k] = e;
+        e.index = k;
+        k = parent;
+      }
+      pairs[k] = pair;
+      pair.index = k;
+    }
+    
+    void heapifyDown(int k, GvmClusterPair<S,K,P> *pair) {
+      int half = ushift_right(size);
+      while (k < half) {
+        int child = ushift_right(k) + 1;
+        GvmClusterPair<S,K,P> &c = pairs[child];
+        int right = child + 1;
+        if (right < size && c.value > pairs[right].value) c = pairs[child = right];
+        if (pair.value <= c.value) break;
+        pairs[k] = c;
+        c.index = k;
+        k = child;
+      }
+      pairs[k] = pair;
+      pair.index = k;
+    }
+    
   }; // end class GvmClusterPairs
 
 }

@@ -75,6 +75,22 @@ namespace Gvm {
     
     K* key;
     
+    // constructor
+    
+    GvmCluster<S,K,P>(GvmClusters<S,K,P> &inClusters)
+    : clusters(inClusters), pairs()
+    {
+      removed = false;
+      count = 0;
+      m0 = 0.0;
+      m1 = clusters.space.newOrigin();
+      m2 = clusters.space.newOrigin();
+      
+      pairs.reserve(clusters.capacity);
+      
+      update();
+    }
+    
     // getters
     
     // The total mass of the cluster.
@@ -101,22 +117,6 @@ namespace Gvm {
       return key;
     }
     
-    // constructor
-    
-    GvmCluster<S,K,P>(GvmClusters<S,K,P> &inClusters)
-    : clusters(inClusters), pairs()
-    {
-      removed = false;
-      count = 0;
-      m0 = 0.0;
-      m1 = clusters.space.newOrigin();
-      m2 = clusters.space.newOrigin();
-      
-      pairs.reserve(clusters.capacity);
-      
-      update();
-    }
-
     // package methods
     
     // Completely clears this cluster. All points and their associated mass is
@@ -207,12 +207,6 @@ namespace Gvm {
       }
     }
     
-    // Recompute this cluster's variance.
-    
-    void update() {
-      var = m0 == 0.0 ? 0.0 : clusters.space.variance(m0, m1, m2);
-    }
-    
     // Computes this clusters variance if it were to have a new point added to it.
     //
     // m the mass of the point
@@ -234,6 +228,12 @@ namespace Gvm {
     
     double test(GvmCluster<S,K,P> &cluster) {
       return m0 == 0.0 && cluster.m0 == 0.0 ? 0.0 : clusters.space.variance(m0, m1, m2, cluster.m0, cluster.m1, cluster.m2);
+    }
+    
+    // Recompute this cluster's variance.
+    
+    void update() {
+      var = m0 == 0.0 ? 0.0 : clusters.space.variance(m0, m1, m2);
     }
     
   }; // end class GvmCluster

@@ -66,6 +66,8 @@ namespace Gvm {
       this->update();
     }
     
+    // Updates the value of the pair.
+    
     void update() {
       value = c1.test(c2) - c1.var - c2.var;
     }

@@ -1,5 +1,5 @@
 //
-//  GvmCommon.hpp
+//  Gvm.hpp
 //  GvmCpp
 //
 //  Created by Mo DeJong on 8/14/15.
