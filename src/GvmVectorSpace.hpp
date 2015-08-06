@@ -30,7 +30,7 @@ namespace Gvm {
   // to represent a specific kind of point.
   
   template<typename P>
-  class GvmVectorSpace {
+  class GvmVectorSpace : public GvmSpace<P> {
   public:
     
     int dimensions;

@@ -109,7 +109,7 @@ namespace Gvm {
     // The keyer used to assign keys to clusters.
     
     GvmKeyer<S,K,P>* getKeyer() {
-      if (keyerPtr != nullptr) {
+      if (keyerPtr) {
         return keyerPtr.get();
       } else {
         return defaultKeyerPtr.get();
@@ -119,11 +119,21 @@ namespace Gvm {
     // Setter for keyer property, use this method to define a new keyer instead of
     // using GvmDefaultKeyer. Note that this object will manage the lifetime of
     // the passed in pointer as a unique_ptr so call it with the result of a
-    // new operation. If nullptr is passed into this method then the
-    // default keyer will be used again.
+    // new operation.
     
-    void setKeyer(GvmKeyer<S,K,P> *inKeyer) {
-      keyerPtr = inKeyer;
+    void setKeyer(std::unique_ptr<GvmKeyer<S,K,P>> inKeyer) {
+      keyerPtr = std::move(inKeyer);
+      if (keyerPtr) {        
+      } else {
+        assert(0);
+      }
+    }
+    
+    // Invoke this method to reset the keyer to the default keyer.
+    // default keyer will be used again
+    
+    void resetKeyer() {
+      keyerPtr.reset();
     }
     
     int getCapacity() {
