@@ -65,9 +65,11 @@ namespace Gvm {
     
     std::unique_ptr<GvmDefaultKeyer<S,K,P> > defaultKeyerPtr;
     
-    // If a specific keyer is defined instead of the
-    // default keyer then this pointer will not be nullptr.
-    std::unique_ptr<GvmKeyer<S,K,P> > keyerPtr;
+    // The user can pass a custom keyer object to use
+    // instead of the default keyer. The caller must
+    // take care to manage the lifetime of the pointer.
+
+    GvmKeyer<S,K,P> *keyerPtr;
     
     // The clusters objects.
 
@@ -110,21 +112,18 @@ namespace Gvm {
     
     GvmKeyer<S,K,P>* getKeyer() {
       if (keyerPtr) {
-        return keyerPtr.get();
+        return keyerPtr;
       } else {
         return defaultKeyerPtr.get();
       }
     }
     
     // Setter for keyer property, use this method to define a new keyer instead of
-    // using GvmDefaultKeyer. Note that this object will manage the lifetime of
-    // the passed in pointer as a unique_ptr so call it with the result of a
-    // new operation.
+    // using GvmDefaultKeyer. Note that nullptr cannot be passed to this method.
     
-    void setKeyer(std::unique_ptr<GvmKeyer<S,K,P>> inKeyer) {
-      keyerPtr = std::move(inKeyer);
+    void setKeyer(GvmKeyer<S,K,P> *inKeyer) {
+      keyerPtr = inKeyer;
       if (keyerPtr) {
-        // inKeyer contained a unique_ptr and it was transfered to keyerPtr
       } else {
         assert(0);
       }
@@ -134,7 +133,7 @@ namespace Gvm {
     // default keyer will be used again
     
     void resetKeyer() {
-      keyerPtr.reset();
+      keyerPtr = nullptr;
     }
     
     int getCapacity() {
