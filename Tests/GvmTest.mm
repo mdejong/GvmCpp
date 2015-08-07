@@ -268,10 +268,9 @@ using namespace Gvm;
 
 - (void)testGvmClusterPair3D {
   
-  // The cluster "key" is a list of int values that correspond
-  // to a certain coordinate.
+  // In this case, no specific key is used so padd void as key type
   
-# define ClusterKey vector<vector<double> >
+# define ClusterKey void
   
   GvmVectorSpace<double> vspace(3);
   
