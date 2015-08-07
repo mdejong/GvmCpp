@@ -42,7 +42,7 @@ namespace Gvm {
     // The pairings of this cluster with all other clusters.
     // Note that this is a vector of pointers to cluster pairs.
     
-    std::vector<GvmClusterPair<S,K,P>* > pairs;
+    std::vector<std::shared_ptr<GvmClusterPair<S,K,P>> > pairs;
     
     // Whether this cluster is in the process of being removed.
     
@@ -78,7 +78,7 @@ namespace Gvm {
     // constructor
     
     GvmCluster<S,K,P>(GvmClusters<S,K,P> &inClusters)
-    : clusters(inClusters), pairs()
+    : clusters(inClusters), pairs(), removed(false), m0(0.0), var(0.0), key(nullptr)
     {
       removed = false;
       count = 0;
@@ -87,6 +87,9 @@ namespace Gvm {
       m2 = clusters.space.newOrigin();
       
       pairs.reserve(clusters.capacity);
+      for (int i=0; i < clusters.capacity; i++) {
+        pairs.push_back(nullptr);
+      }
       
       update();
     }

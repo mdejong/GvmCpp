@@ -18,6 +18,7 @@
 #import "GvmCommon.hpp"
 
 #import "GvmDefaultKeyer.hpp"
+#import "GvmClusterPairs.hpp"
 
 namespace Gvm {
   // S
@@ -239,32 +240,29 @@ namespace Gvm {
 //        cj.pairs[i] = pair;
 //        pairs.add(pair);
         
-        GvmClusterPair<S,K,P> &pair = pairs.add(ci, cj);
-        ci.pairs[c] = &pair;
-        cj.pairs[i] = &pair;
+        auto &pair = pairs.add(ci, cj);
+        ci.pairs[c] = pair;
+        cj.pairs[i] = pair;
       }
     }
 
     //does not assume pairs are contiguous
     void updatePairs(GvmCluster<S,K,P> & cluster) {
-      std::vector<GvmClusterPair<S,K,P>* > &pairs = cluster.pairs;
-      // FIXME: impl these methods
-      /*
+      auto &pairs = cluster.pairs;
       //accelerated path
       if (count == bound) {
         int limit = count - 1;
         for (int i = 0; i < limit; i++) {
-          this.pairs.reprioritize(pairs[i]);
+          this->pairs.reprioritize(pairs[i]);
         }
       } else {
         int limit = bound - 1;
         for (int i = 0; i < limit; i++) {
-          GvmClusterPair<S,K> pair = pairs[i];
-          if (pair.c1.removed || pair.c2.removed) continue;
-          this.pairs.reprioritize(pair);
+          auto pair = pairs[i];
+          if (pair.get()->c1.removed || pair.get()->c2.removed) continue;
+          this->pairs.reprioritize(pair);
         }
       }
-      */
     }
 
     

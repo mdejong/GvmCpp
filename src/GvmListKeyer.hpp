@@ -51,7 +51,10 @@ namespace Gvm {
     
     K* combineKeys(K* list1, K* list2)
     {
-      list1->insert(list1->end(), list2->begin(), list2->end());
+      for ( auto &p : *list2 ) {
+        list1->push_back(p);
+      }
+      //list1->insert(list1->end(), list2->begin(), list2->end());
       return list1;
     }
     
