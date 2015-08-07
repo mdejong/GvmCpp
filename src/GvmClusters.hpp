@@ -77,7 +77,7 @@ namespace Gvm {
     
     // The clusters objects.
 
-    std::vector<GvmCluster<S,K,P> > clusters;
+    std::vector<std::shared_ptr<GvmCluster<S,K,P>> > clusters;
     
     // All possible cluster pairs.
     
@@ -110,6 +110,9 @@ namespace Gvm {
     {
       assert(inCapacity > 0);
       clusters.reserve(capacity);
+      for (int i=0; i < capacity; i++) {
+        clusters.push_back(nullptr);
+      }
     }
     
     // The keyer used to assign keys to clusters.
@@ -151,7 +154,9 @@ namespace Gvm {
     // Removes all clusters and clustered points but retains the keyer.
     
     void clear() {
-      clusters.clear();
+      for (int i=0; i < capacity; i++) {
+        clusters[i] = nullptr;
+      }
       pairs.clear();
       additions = 0;
       count = 0;
@@ -172,9 +177,12 @@ namespace Gvm {
       if (count < capacity) { //shortcut
         //TODO should prefer add if var comes to zero
         
-        clusters.push_back(GvmCluster<S,K,P>(*this));
-        GvmCluster<S,K,P> &cluster = clusters[clusters.size() - 1];
-        
+        auto newClusterPtr = std::make_shared<GvmCluster<S,K,P> >(*this);
+#if defined(DEBUG)
+        assert(clusters[additions] == nullptr);
+#endif // DEBUG
+        clusters[additions] = newClusterPtr;
+        GvmCluster<S,K,P> &cluster = *(newClusterPtr.get());
         cluster.set(m, pt);
         addPairs();
         cluster.key = getKeyer()->addKey(cluster, key);
@@ -188,7 +196,8 @@ namespace Gvm {
         GvmCluster<S,K,P> *additionCPtr = nullptr;
         double additionT = std::numeric_limits<double>::max();
         for (int i = 0; i < clusters.size(); i++) {
-          GvmCluster<S,K,P> *clusterPtr = &clusters[i];
+          auto &clusterSharedPtr = clusters[i];
+          GvmCluster<S,K,P> *clusterPtr = clusterSharedPtr.get();
           double t = clusterPtr->test(m, pt);
           if (t < additionT) {
             additionCPtr = clusterPtr;
@@ -241,7 +250,8 @@ namespace Gvm {
       double totalVar = 0.0;
       double totalMass = 0.0;
       for (int i = 0; i < count; i++) {
-        GvmCluster<S,K,P> &cluster = clusters[i];
+        auto &clusterSharedPtr = clusters[i];
+        GvmCluster<S,K,P> &cluster = *(clusterSharedPtr.get());
         totalVar += cluster.var;
         totalMass += cluster.m0;
       }
@@ -250,7 +260,8 @@ namespace Gvm {
         if (count == 1) {
           //remove the last cluster
           for (int i = 0; i < bound; i++) {
-            GvmCluster<S,K,P> &c = clusters[i];
+            auto &clusterSharedPtr = clusters[i];
+            GvmCluster<S,K,P> &c = *(clusterSharedPtr.get());
             if (!c.removed) {
               c.removed = true;
               break;
@@ -283,7 +294,9 @@ namespace Gvm {
       {
         int j = 0;
         for (int i = 0; i < bound;) {
-          bool lose = clusters[i].removed;
+          auto &clusterSharedPtr = clusters[i];
+          GvmCluster<S,K,P> &cluster = *(clusterSharedPtr.get());
+          bool lose = cluster.removed;
           if (lose) {
             i++;
           } else {
@@ -300,7 +313,8 @@ namespace Gvm {
       }
       //iterate over cluster pairs and remove dead pairs
       for (int i = 0; i < count; i++) {
-        auto &cluster = clusters[i];
+        auto &clusterSharedPtr = clusters[i];
+        auto &cluster = *(clusterSharedPtr.get());
         auto &pairs = cluster.pairs;
         int k = 0;
         for (int j = 0; j < bound-1;) {
@@ -331,7 +345,8 @@ namespace Gvm {
     std::vector<GvmResult<S,K,P>> results() {
       std::vector<GvmResult<S,K,P>> list;
       for (int i = 0; i < count; i++) {
-        auto &cluster = clusters[i];
+        auto &clusterSharedPtr = clusters[i];
+        auto &cluster = *(clusterSharedPtr.get());
         //TODO exclude massless clusters?
         list.push_back(GvmResult<S,K,P>(cluster));
       }
@@ -344,16 +359,10 @@ namespace Gvm {
     //assumes last cluster is the one to add pairs for
     //assumes pairs are contiguous
     void addPairs() {
-      GvmCluster<S,K,P> &cj = clusters[count];
+      GvmCluster<S,K,P> &cj = *(clusters[count].get());
       int c = count - 1; //index at which new pairs registered for existing clusters
       for (int i = 0; i < count; i++) {
-        GvmCluster<S,K,P> &ci = clusters[i];
-        
-//        GvmClusterPair<S,K,P> pair(ci, cj);
-//        ci.pairs[c] = pair;
-//        cj.pairs[i] = pair;
-//        pairs.add(pair);
-        
+        GvmCluster<S,K,P> &ci = *(clusters[i].get());
         auto &pair = pairs.add(ci, cj);
         ci.pairs[c] = pair;
         cj.pairs[i] = pair;
