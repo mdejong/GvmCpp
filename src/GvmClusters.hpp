@@ -60,6 +60,9 @@ namespace Gvm {
     
     S space;
     
+    // FIXME: make defaultKeyerPtr a member object instead
+    // of using unique_ptr here.
+    
     // The default keyer is implicitly defined and is
     // used unless setKeyer() is invoked to make
     // this cluster use a custom keyer.
@@ -222,7 +225,103 @@ namespace Gvm {
       return;
     }
     
-    // FIXME: need impl of add and following methods
+    // Collapses the number of clusters subject to constraints on the maximum
+    // permitted variance, and the least number of clusters. This method may be
+    // called at any time, including between calls to add().
+    //
+    // maxVar : an upper bound on the global variance that may not be exceeded
+    // by merging clusters
+    // minClusters : a lower bound on the the number of clusters that may not be
+    // exceeded by merging clusters
+    
+    void reduce(double maxVar, int minClusters) {
+      assert(minClusters >= 0);
+      if (count <= minClusters) return; //nothing to do
+      
+      double totalVar = 0.0;
+      double totalMass = 0.0;
+      for (int i = 0; i < count; i++) {
+        GvmCluster<S,K,P> &cluster = clusters[i];
+        totalVar += cluster.var;
+        totalMass += cluster.m0;
+      }
+      
+      while (count > minClusters) {
+        if (count == 1) {
+          //remove the last cluster
+          for (int i = 0; i < bound; i++) {
+            GvmCluster<S,K,P> &c = clusters[i];
+            if (!c.removed) {
+              c.removed = true;
+              break;
+            }
+          }
+        } else {
+          GvmClusterPair<S,K,P> *mergePair = pairs.peek();
+          assert(mergePair);
+          GvmCluster<S,K,P> *c1 = &mergePair->c1;
+          GvmCluster<S,K,P> *c2 = &mergePair->c2;
+          
+          if (c1->m0 < c2->m0) {
+            c1 = c2;
+            c2 = &mergePair->c1;
+          }
+          if (maxVar >= 0.0) {
+            double diff = c1->test(*c2) - c1->var - c2->var;
+            totalVar += diff;
+            if (totalVar/totalMass > maxVar) break; //stop here, we are going to exceed maximum
+          }
+          c1->key = getKeyer()->mergeKeys(*c1, *c2);
+          c1->add(*c2);
+          updatePairs(*c1);
+          removePairs(*c2);
+          c2->removed = true;
+        }
+        count--;
+      }
+      //iterate over clusters and remove dead clusters
+      {
+        int j = 0;
+        for (int i = 0; i < bound;) {
+          bool lose = clusters[i].removed;
+          if (lose) {
+            i++;
+          } else {
+            if (i != j) {
+             clusters[j] = clusters[i];
+            }
+            i++;
+            j++;
+          }
+        }
+        for (; j < bound; j++) {
+          clusters[j] = nullptr;
+        }
+      }
+      //iterate over cluster pairs and remove dead pairs
+      for (int i = 0; i < count; i++) {
+        auto &cluster = clusters[i];
+        auto &pairs = cluster.pairs;
+        int k = 0;
+        for (int j = 0; j < bound-1;) {
+          auto &pair = pairs[j];
+          bool lose = pair.get()->c1.removed || pair.get()->c2.removed;
+          if (lose) {
+            j++;
+          } else {
+            if (j != k) {
+              pairs[k] = pairs[j];
+            }
+            k++;
+            j++;
+          }
+        }
+        for (; k < bound; k++) {
+          pairs[k] = nullptr;
+        }
+      }
+      bound = count;
+    }
     
     // Obtains the clusters for the points added. This method may be called
     // at any time, including between calls to add().
@@ -273,13 +372,25 @@ namespace Gvm {
       } else {
         int limit = bound - 1;
         for (int i = 0; i < limit; i++) {
-          auto pair = pairs[i];
+          auto &pair = pairs[i];
           if (pair.get()->c1.removed || pair.get()->c2.removed) continue;
           this->pairs.reprioritize(pair);
         }
       }
     }
 
+    //does not assume pairs are contiguous
+    //leaves pairs in cluster pair lists
+    //these are tidied when everything is made contiguous again
+    void removePairs(GvmCluster<S,K,P> & cluster) {
+      auto &pairs = cluster.pairs;
+      for (int i = 0; i < bound-1; i++) {
+        auto &pair = pairs[i];
+        if (pair.get()->c1.removed || pair.get()->c2.removed) continue;
+        this->pairs.remove(pair);
+      }
+      
+    }
     
   }; // end class GvmClusters
 

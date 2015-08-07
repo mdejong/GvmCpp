@@ -74,6 +74,8 @@ namespace Gvm {
     : size(0)
     {
       pairs.reserve(initialCapacity);
+      // FIXME: fix size of pairs at init time so that it acts
+      // like an array instead of push_back()
       return;
     }
     
@@ -156,7 +158,6 @@ namespace Gvm {
       // Note that capacity here is limited to 32 bit signed int range
       if (newCapacity < 0) newCapacity = std::numeric_limits<int32_t>::max();
       if (newCapacity < minCapacity) newCapacity = minCapacity;
-      //pairs = Arrays.copyOf(pairs, newCapacity);
       pairs.reserve(newCapacity);
     }
     
@@ -168,13 +169,13 @@ namespace Gvm {
       int s = --size;
       if (s == i) {
         // removing last element
-        pairs[i].index = -1;
+        pairs[i].get()->index = -1;
         pairs[i] = nullptr;
       } else {
         // Move pair object from one array slot to another
         std::shared_ptr<GvmClusterPair<S,K,P> > moved = pairs[s];
         pairs[s] = nullptr;
-        moved.index = -1;
+        moved.get()->index = -1;
         heapifyDown(i, moved);
         if (pairs[i] == moved) {
           heapifyUp(i, moved);

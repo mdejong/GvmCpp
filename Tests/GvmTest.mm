@@ -261,6 +261,10 @@ using namespace Gvm;
   
   XCTAssert(results.size() == 3);
   
+  // Reduce down to 1 cluster
+  
+  clusters.reduce(-1.0, 1);
+  
 # undef ClusterKey
 }
 

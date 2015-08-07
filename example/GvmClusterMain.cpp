@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
   // The cluster "key" is a list of int values that correspond
   // to a certain coordinate.
   
-  typedef vector<vector<double> > ClusterKey;
+  typedef void ClusterKey;
   
   GvmVectorSpace<double> vspace(3);
   

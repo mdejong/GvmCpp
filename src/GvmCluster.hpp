@@ -78,7 +78,7 @@ namespace Gvm {
     // constructor
     
     GvmCluster<S,K,P>(GvmClusters<S,K,P> &inClusters)
-    : clusters(inClusters), pairs(), removed(false), m0(0.0), var(0.0), key(nullptr)
+    : clusters(inClusters), removed(false), m0(0.0), var(0.0), key(nullptr)
     {
       removed = false;
       count = 0;
