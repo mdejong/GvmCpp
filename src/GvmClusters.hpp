@@ -224,6 +224,21 @@ namespace Gvm {
     
     // FIXME: need impl of add and following methods
     
+    // Obtains the clusters for the points added. This method may be called
+    // at any time, including between calls to add().
+    //
+    // return the result of clustering the points thus far added
+    
+    std::vector<GvmResult<S,K,P>> results() {
+      std::vector<GvmResult<S,K,P>> list;
+      for (int i = 0; i < count; i++) {
+        auto &cluster = clusters[i];
+        //TODO exclude massless clusters?
+        list.push_back(GvmResult<S,K,P>(cluster));
+      }
+      return list;
+    }
+    
     // private utility methods
     
     //assumes that count not yet incremented

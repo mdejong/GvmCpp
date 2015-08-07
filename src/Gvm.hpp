@@ -24,3 +24,5 @@
 #import "GvmClusters.hpp"
 #import "GvmClusterPair.hpp"
 #import "GvmClusterPairs.hpp"
+
+#import "GvmResult.hpp"
