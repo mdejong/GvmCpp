@@ -78,5 +78,15 @@ int main(int argc, char **argv) {
     cout << "cluster: " << result.toString() << endl;
   }
   
+  // Reduce down to 1 cluster
+
+  cout << "reduce " << endl;
+  
+  clusters.reduce(-1.0, 1);
+  
+  for ( auto & result : clusters.results() ) {
+    cout << "cluster: " << result.toString() << endl;
+  }
+  
   return 0;
 }

@@ -74,8 +74,9 @@ namespace Gvm {
     : size(0)
     {
       pairs.reserve(initialCapacity);
-      // FIXME: fix size of pairs at init time so that it acts
-      // like an array instead of push_back()
+      for (int i=0; i < initialCapacity; i++) {
+        pairs.push_back(nullptr);
+      }
       return;
     }
     
@@ -94,7 +95,7 @@ namespace Gvm {
       size = i + 1;
       if (i == 0) {
         pairs[0] = pair;
-        pair.index = 0;
+        pair.get()->index = 0;
       } else {
         heapifyUp(i, pair);
       }
@@ -103,11 +104,10 @@ namespace Gvm {
     
     // add cluster pair and return ref to shared pair object that was just added
     
-    std::shared_ptr<GvmClusterPair<S,K,P>>&
-    add(GvmCluster<S,K,P> &c1, GvmCluster<S,K,P> &c2) {
+    std::shared_ptr<GvmClusterPair<S,K,P>>
+    newSharedPair(GvmCluster<S,K,P> &c1, GvmCluster<S,K,P> &c2) {
       auto newPairPtr = std::make_shared<GvmClusterPair<S,K,P> >(c1, c2);
-      pairs.push_back(newPairPtr);
-      return pairs[pairs.size() - 1];
+      return newPairPtr;
     }
 
     GvmClusterPair<S,K,P>* peek() {
@@ -153,7 +153,7 @@ namespace Gvm {
       if (minCapacity < 0) {
         assert(0); // can't grow, maximum number of elements exceeded
       }
-      int oldCapacity = pairs.size();
+      int oldCapacity = (int) pairs.size();
       int newCapacity = ((oldCapacity < 64)? ((oldCapacity + 1) * 2): ((oldCapacity / 2) * 3));
       // Note that capacity here is limited to 32 bit signed int range
       if (newCapacity < 0) newCapacity = std::numeric_limits<int32_t>::max();

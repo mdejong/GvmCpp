@@ -363,9 +363,10 @@ namespace Gvm {
       int c = count - 1; //index at which new pairs registered for existing clusters
       for (int i = 0; i < count; i++) {
         GvmCluster<S,K,P> &ci = *(clusters[i].get());
-        auto &pair = pairs.add(ci, cj);
+        auto pair = pairs.newSharedPair(ci, cj);
         ci.pairs[c] = pair;
         cj.pairs[i] = pair;
+        pairs.add(pair);
       }
     }
 

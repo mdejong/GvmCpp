@@ -253,9 +253,11 @@ using namespace Gvm;
     clusters.add(1, pt, key);
   }
   
-  XCTAssert(clusters.clusters.size() == 3);
+  // There are 256 possible cluster array slots
   
-  // GvmResult toString()
+  XCTAssert(clusters.clusters.size() == 256);
+  
+  // Only 3 clusters are actually used since there are only 3 input points
   
   vector<GvmResult<GvmVectorSpace<double>, ClusterKey, double>> results = clusters.results();
   
@@ -264,6 +266,10 @@ using namespace Gvm;
   // Reduce down to 1 cluster
   
   clusters.reduce(-1.0, 1);
+  
+  results = clusters.results();
+  
+  XCTAssert(results.size() == 1);
   
 # undef ClusterKey
 }
@@ -314,13 +320,23 @@ using namespace Gvm;
     clusters.add(1, pt, nullptr);
   }
   
-  XCTAssert(clusters.clusters.size() == 3);
+  // There are 256 possible cluster array slots
   
-  // GvmResult toString()
+  XCTAssert(clusters.clusters.size() == 256);
+  
+  // Only 3 clusters are actually used since there are only 3 input points
   
   vector<GvmResult<GvmVectorSpace<double>, ClusterKey, double>> results = clusters.results();
   
   XCTAssert(results.size() == 3);
+  
+  // Reduce down to 1 cluster
+  
+  clusters.reduce(-1.0, 1);
+  
+  results = clusters.results();
+  
+  XCTAssert(results.size() == 1);
   
 # undef ClusterKey
 }
