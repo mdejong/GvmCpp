@@ -193,8 +193,7 @@ namespace Gvm {
         int parent = ushift_right(k - 1);
         std::shared_ptr<GvmClusterPair<S,K,P> > &e = pairs[parent];
         if (pairValue >= e.get()->value) break;
-        pairs[k] = pairs[parent];
-        pairs[parent] = nullptr;
+        pairs[k] = e;
         e.get()->index = k;
         k = parent;
       }
@@ -206,7 +205,7 @@ namespace Gvm {
       auto pairValue = pair.get()->value;
       int half = ushift_right(size);
       while (k < half) {
-        int child = ushift_right(k) + 1;
+        int child = ushift_left(k) + 1;
         std::shared_ptr<GvmClusterPair<S,K,P> > *c = &pairs[child];
         int right = child + 1;
         if (right < size && c->get()->value > pairs[right].get()->value) {
@@ -214,7 +213,7 @@ namespace Gvm {
           c = &pairs[child];
         }
         if (pairValue <= c->get()->value) break;
-        pairs[k] = pairs[child]; // pairs[k] = c;
+        pairs[k] = *c;
         c->get()->index = k;
         k = child;
       }
