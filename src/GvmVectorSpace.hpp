@@ -116,7 +116,7 @@ namespace Gvm {
     void addScaledSqr(std::vector<P> &dstPt, double m, std::vector<P> &srcPt) {
       for (int i = 0; i < dimensions; i++) {
         double c = srcPt[i];
-        dstPt[i] = m * c * c;
+        dstPt[i] += m * c * c;
       }
     }
     
