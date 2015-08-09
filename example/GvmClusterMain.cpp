@@ -32,10 +32,6 @@ int main(int argc, char **argv) {
   
   GvmClusters<GvmVectorSpace<double>, ClusterKey, double> clusters(vspace, numClusters);
   
-//  GvmCluster<GvmVectorSpace<double>, ClusterKey, double> c1(clusters);
-//  GvmCluster<GvmVectorSpace<double>, ClusterKey, double> c2(clusters);
-//  GvmClusterPair<GvmVectorSpace<double>, ClusterKey, double> cPair(c1, c2);
-  
   // Generate list of 3D points
   
   double p1[] = { 0.0, 0.0, 0.0 };
