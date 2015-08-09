@@ -74,8 +74,11 @@ int main(int argc, char **argv) {
   
   // vector<GvmResult>
   
+  int clusteri = 0;
+  
   for ( auto & result : clusters.results() ) {
-    cout << "cluster: " << result.toString() << endl;
+    cout << "cluster[" << clusteri << "]: " << result.toString() << endl;
+    clusteri++;
   }
   
   // Reduce down to 1 cluster
@@ -84,8 +87,11 @@ int main(int argc, char **argv) {
   
   clusters.reduce(-1.0, 1);
   
+  clusteri = 0;
+  
   for ( auto & result : clusters.results() ) {
-    cout << "cluster: " << result.toString() << endl;
+    cout << "cluster[" << clusteri << "]: " << result.toString() << endl;
+    clusteri++;
   }
   
   return 0;
