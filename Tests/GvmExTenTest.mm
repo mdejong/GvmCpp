@@ -13,6 +13,8 @@
 
 #import "Gvm.hpp"
 
+#include <iostream>
+
 using namespace std;
 using namespace Gvm;
 
@@ -87,6 +89,82 @@ using namespace Gvm;
   vector<GvmResult<GvmVectorSpace<double>, ClusterKey, double>> results = clusters.results();
   
   XCTAssert(results.size() == 3);
+  
+  /*
+   Java results with no initial rand() on input order:
+   
+   cluster 0 contains 6 points
+   cluster result: [0.329206009016833, 0.49656880253624225]  count: 6  variance: 0.034  mass: 6.000  key: [[D@2503dbd3, [D@4b67cf4d, [D@7ea987ac, [D@12a3a380, [D@29453f44, [D@5cad8086]
+   cluster 1 contains 1 points
+   cluster result: [0.7136742195009704, 0.36177938722906483]  count: 1  variance: 0.000  mass: 1.000  key: [[D@6e0be858]
+   cluster 2 contains 3 points
+   cluster result: [0.6321126350287992, 0.7392322941326109]  count: 3  variance: 0.001  mass: 3.000  key: [[D@61bbe9ba, [D@610455d6, [D@511d50c0]
+   wrote 10 total pixels
+   cluster 0
+   0.333 0.487
+   0.346 0.535
+   0.275 0.347
+   0.347 0.553
+   0.362 0.525
+   0.312 0.533
+   cluster 1
+   0.714 0.362
+   cluster 2
+   0.632 0.730
+   0.611 0.742
+   0.653 0.746
+   
+   */
+  
+  if (false) {
+  for ( auto & result : results ) {
+    cout << "cluster: " << result.toString() << endl;
+  }
+  }
+  
+  auto & result0 = results[0];
+  auto & result1 = results[1];
+  auto & result2 = results[2];
+  
+  double cx, cy;
+  
+  // cluster 0: count 6, mass 6
+  
+  XCTAssert(result0.count == 6);
+  XCTAssert(result0.mass == 6);
+  
+  // cluster center of mass
+  // [0.329206009016833, 0.49656880253624225]
+  cx = result0.point[0];
+  cy = result0.point[1];
+  XCTAssert(int(round(cx * 100.0)) == 33);
+  XCTAssert(int(round(cy * 100.0)) == 50);
+  
+  // cluster 1: count 1, mass 1
+  
+  XCTAssert(result1.count == 1);
+  XCTAssert(result1.mass == 1);
+  
+  // cluster center of mass
+  // [0.7136742195009704, 0.36177938722906483]
+  cx = result1.point[0];
+  cy = result1.point[1];
+  XCTAssert(int(round(cx * 100.0)) == 71);
+  XCTAssert(int(round(cy * 100.0)) == 36);
+  
+  // cluster 2: count 3, mass 3
+  
+  XCTAssert(result2.count == 3);
+  XCTAssert(result2.mass == 3);
+  
+  // cluster center of mass
+  // [0.6321126350287992, 0.7392322941326109]
+  cx = result2.point[0];
+  cy = result2.point[1];
+  XCTAssert(int(round(cx * 100.0)) == 63);
+  XCTAssert(int(round(cy * 100.0)) == 74);
+  
+  // FIXME: cluster variance does not seem to match
   
 # undef ClusterKey
 }
