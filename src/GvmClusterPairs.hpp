@@ -128,8 +128,8 @@ namespace Gvm {
         assert(0);
       }
       pairObj.update();
-      std::shared_ptr<GvmClusterPair<S,K,P> > parent = (i == 0) ? nullptr : pairs[ ushift_right(i - 1) ];
-      if (parent != nullptr && parent->value > pairObj.value) {
+      std::shared_ptr<GvmClusterPair<S,K,P> > *parent = (i == 0) ? nullptr : &pairs[ ushift_right(i - 1) ];
+      if (parent != nullptr && parent->get()->value > pairObj.value) {
         heapifyUp(i, pair);
       } else {
         heapifyDown(i, pair);

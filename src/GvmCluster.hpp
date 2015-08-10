@@ -86,6 +86,13 @@ namespace Gvm {
       m1 = clusters.space.newOrigin();
       m2 = clusters.space.newOrigin();
       
+      // FIXME: how many pairs for each cluster ?
+      // If 2048 clusters and each one has 2048
+      // pairs as initial capacity, then that is
+      // (2048 * 8) bytes for null pointers.
+      // 16384 = 16 kB for 1 cluster
+      // 4 megs ?
+      
       pairs.reserve(clusters.capacity);
       for (int i=0; i < clusters.capacity; i++) {
         pairs.push_back(nullptr);

@@ -99,14 +99,18 @@ int main(int argc, char **argv) {
   cout << "read " << allPoints.size() << " pixels from " << filename << endl;
   
   typedef vector<vector<double> > ClusterKey;
+
+  typedef GvmVectorSpace<double> ClusterVspace;
+  //typedef GvmVectorSpace<double, 3> ClusterVspace;
   
-  GvmVectorSpace<double> vspace(3);
+  ClusterVspace vspace(3);
+  //ClusterVspace vspace;
   
   const int numClusters = 2048;
   
-  GvmClusters<GvmVectorSpace<double>, ClusterKey, double> clusters(vspace, numClusters);
+  GvmClusters<ClusterVspace, ClusterKey, double> clusters(vspace, numClusters);
   
-  GvmListKeyer<GvmVectorSpace<double>, ClusterKey, double> intListKeyer;
+  GvmListKeyer<ClusterVspace, ClusterKey, double> intListKeyer;
   
   // Install key combiner for list of points, caller must manage ptr lifetime
   
@@ -142,7 +146,7 @@ int main(int argc, char **argv) {
   
   int clusteri = 0;
   
-  vector<GvmResult<GvmVectorSpace<double>, ClusterKey, double>> results = clusters.results();
+  vector<GvmResult<ClusterVspace, ClusterKey, double>> results = clusters.results();
   
   for ( auto & result : results ) {
     cout << "cluster[" << clusteri << "]: " << result.toString() << endl;
@@ -167,9 +171,9 @@ int main(int argc, char **argv) {
     int pixelsWritten = 0;
     
     for ( vector<double> &coord : *allKeys ) {
-      uint32_t x = coord[0];
-      uint32_t y = coord[1];
-      uint32_t z = coord[2];
+      double x = coord[0];
+      double y = coord[1];
+      double z = coord[2];
       
       if (x < 0 || x > 255) {
         assert(0);

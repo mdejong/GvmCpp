@@ -205,7 +205,7 @@ namespace Gvm {
           }
         }
         if (additionT <= mergeT) {
-          //chose addition
+          //choose addition
           GvmCluster<S,K,P> &additionC = *additionCPtr;
           additionC.add(m, pt);
           updatePairs(additionC);
