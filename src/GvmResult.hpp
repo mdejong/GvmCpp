@@ -41,7 +41,7 @@ namespace Gvm {
 
     // The aggregate mass of the cluster.
     
-    double mass;
+    P mass;
     
     // Defines the points that will be clusters
     
@@ -53,11 +53,11 @@ namespace Gvm {
 
     // The variance of the cluster.
 
-    double variance;
+    P variance;
     
     // The standard deviation of the cluster.
     
-    double stdDeviation;
+    P stdDeviation;
     
     // The key associated with the cluster.
     
@@ -71,11 +71,11 @@ namespace Gvm {
       count = cluster.count;
       mass = cluster.m0;
       variance = cluster.var / mass;
-      stdDeviation = -1.0;
+      stdDeviation = P(-1.0);
       key = cluster.key;
       //space = cluster.clusters.space;
       point = space.newCopy(cluster.m1);
-      space.scale(point, 1.0 / mass);
+      space.scale(point, P(1.0) / mass);
     }
     
     // getters
@@ -92,13 +92,13 @@ namespace Gvm {
     
     // The aggregate mass of the cluster.
     
-    double getMass() {
+    P getMass() {
       return mass;
     }
     
     // Sets the aggregate mass of the cluster.
     
-    void setMass(double inMass) {
+    void setMass(P inMass) {
       mass = inMass;
     }
     
@@ -126,24 +126,24 @@ namespace Gvm {
 
     // The variance of the cluster.
     
-    double getVariance() {
+    P getVariance() {
       return variance;
     }
     
     // The standard deviation of the cluster.
     
-    double getStdDeviation() {
-      return stdDeviation < 0.0 ? stdDeviation = sqrt(variance) : stdDeviation;
+    P getStdDeviation() {
+      return stdDeviation < P(0.0) ? stdDeviation = sqrt(variance) : stdDeviation;
     }
     
     // Sets the variance of the cluster.
     
-    void setVariance(double inVariance) {
-      if (inVariance < 0.0) {
+    void setVariance(P inVariance) {
+      if (inVariance < P(0.0)) {
         assert(0); // negative variance
       }
       variance = inVariance;
-      stdDeviation = -1.0;
+      stdDeviation = P(-1.0);
     }
     
     // The key associated with the cluster, may be nullptr.
@@ -166,9 +166,11 @@ namespace Gvm {
       
       sb << space.toString(point);
       
-      snprintf(buffer, 100, "  count: %d  variance: %3.3f  mass: %3.3f  key: %s", count, variance, mass, key);
-      sb << buffer;
+      // FIXME: use generic toString() method defined on the specific key type
       
+      snprintf(buffer, 100, "  count: %d  variance: %3.3f  mass: %3.3f  key: %p", count, variance, mass, key);
+      sb << buffer;
+            
       return sb.str();
     }
     

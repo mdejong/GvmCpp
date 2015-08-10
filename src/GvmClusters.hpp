@@ -48,8 +48,8 @@ namespace Gvm {
     // var : a variance
     // return the variance clamped at zero
     
-    static inline double correct(double var) {
-      return var >= 0.0 ? var : 0.0;
+    static inline P correct(P var) {
+      return var >= P(0.0) ? var : P(0.0);
     }
     
     // The greatest number of clusters that will be recorded
@@ -172,8 +172,8 @@ namespace Gvm {
     // or a shared_ptr, the lifetime of this
     // pointer must be managed by the caller.
     
-    void add(double m, std::vector<P> &pt, K* key) {
-      if (m == 0.0) return; //nothing to do
+    void add(P m, std::vector<P> &pt, K* key) {
+      if (m == P(0.0)) return; //nothing to do
       if (count < capacity) { //shortcut
         //TODO should prefer add if var comes to zero
         
@@ -191,14 +191,14 @@ namespace Gvm {
       } else {
         //identify cheapest merge
         GvmClusterPair<S,K,P> *mergePairPtr = pairs.peek();
-        double mergeT = mergePairPtr == nullptr ? std::numeric_limits<double>::max() : mergePairPtr->value;
+        P mergeT = mergePairPtr == nullptr ? std::numeric_limits<P>::max() : mergePairPtr->value;
         //find cheapest addition
         GvmCluster<S,K,P> *additionCPtr = nullptr;
-        double additionT = std::numeric_limits<double>::max();
+        P additionT = std::numeric_limits<P>::max();
         for (int i = 0; i < clusters.size(); i++) {
           auto &clusterSharedPtr = clusters[i];
           GvmCluster<S,K,P> *clusterPtr = clusterSharedPtr.get();
-          double t = clusterPtr->test(m, pt);
+          P t = clusterPtr->test(m, pt);
           if (t < additionT) {
             additionCPtr = clusterPtr;
             additionT = t;
@@ -243,12 +243,12 @@ namespace Gvm {
     // minClusters : a lower bound on the the number of clusters that may not be
     // exceeded by merging clusters
     
-    void reduce(double maxVar, int minClusters) {
+    void reduce(P maxVar, int minClusters) {
       assert(minClusters >= 0);
       if (count <= minClusters) return; //nothing to do
       
-      double totalVar = 0.0;
-      double totalMass = 0.0;
+      P totalVar = P(0.0);
+      P totalMass = P(0.0);
       for (int i = 0; i < count; i++) {
         auto &clusterSharedPtr = clusters[i];
         GvmCluster<S,K,P> &cluster = *(clusterSharedPtr.get());
@@ -277,8 +277,8 @@ namespace Gvm {
             c1 = c2;
             c2 = &mergePair->c1;
           }
-          if (maxVar >= 0.0) {
-            double diff = c1->test(*c2) - c1->var - c2->var;
+          if (maxVar >= P(0.0)) {
+            P diff = c1->test(*c2) - c1->var - c2->var;
             totalVar += diff;
             if (totalVar/totalMass > maxVar) break; //stop here, we are going to exceed maximum
           }

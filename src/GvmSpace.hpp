@@ -25,20 +25,20 @@ namespace Gvm {
     
     //TODO use within cluster
     
-    static inline double nonNegative(double v) {
-      return v < 0.0 ? 0.0 : v;
+    static inline P nonNegative(P v) {
+      return v < P(0.0) ? P(0.0) : v;
     }
     
     //not used directly in algorithm, but useful - override for good performance
     
-    double magnitude(std::vector<P> &pt)
+    P magnitude(std::vector<P> &pt)
     {
       return sqrt(magnitudeSqr(pt));
     }
     
     //not used directly in algorithm, but useful - override for good performance
     
-    double distance(std::vector<P> &pt1, std::vector<P> &pt2)
+    P distance(std::vector<P> &pt1, std::vector<P> &pt2)
     {
       std::vector<P> p = pt1.newCopy(pt1);
       subtract(p, pt2);

@@ -50,7 +50,7 @@ namespace Gvm {
 
     // The amount the global variance would increase if this pair was merged.
     
-    double value;
+    P value;
     
     // Constructs a new pair and computes its value.
     //

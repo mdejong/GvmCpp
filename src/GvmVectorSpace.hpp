@@ -58,17 +58,17 @@ namespace Gvm {
     
     // space point operations
     
-    double magnitudeSqr(std::vector<P> &pt) {
-      double sum = 0.0;
+    P magnitudeSqr(std::vector<P> &pt) {
+      P sum = P(0.0);
       for (int i = 0; i < D; i++) {
         P c = pt[i];
-        sum += (double) (c * c);
+        sum += (c * c);
       }
       return sum;
     }
 
-    double sum(std::vector<P> &pt) {
-      double sum = 0.0;
+    P sum(std::vector<P> &pt) {
+      P sum = P(0.0);
       for (int i = 0; i < D; i++) {
         P c = pt[i];
         sum += c;
@@ -78,7 +78,7 @@ namespace Gvm {
     
     void setToOrigin(std::vector<P> &pt) {
       for (int i = 0; i < D; i++) {
-        pt[i] = 0.0;
+        pt[i] = P(0.0);
       }
     }
 
@@ -88,15 +88,15 @@ namespace Gvm {
       }
     }
 
-    void setToScaled(std::vector<P> &dstPt, double m, std::vector<P> &srcPt) {
+    void setToScaled(std::vector<P> &dstPt, P m, std::vector<P> &srcPt) {
       for (int i = 0; i < D; i++) {
         dstPt[i] = m * srcPt[i];
       }
     }
 
-    void setToScaledSqr(std::vector<P> &dstPt, double m, std::vector<P> &srcPt) {
+    void setToScaledSqr(std::vector<P> &dstPt, P m, std::vector<P> &srcPt) {
       for (int i = 0; i < D; i++) {
-        double c = srcPt[i];
+        P c = srcPt[i];
         dstPt[i] = m * (c * c);
       }
     }
@@ -107,15 +107,15 @@ namespace Gvm {
       }
     }
 
-    void addScaled(std::vector<P> &dstPt, double m, std::vector<P> &srcPt) {
+    void addScaled(std::vector<P> &dstPt, P m, std::vector<P> &srcPt) {
       for (int i = 0; i < D; i++) {
         dstPt[i] += m * srcPt[i];
       }
     }
 
-    void addScaledSqr(std::vector<P> &dstPt, double m, std::vector<P> &srcPt) {
+    void addScaledSqr(std::vector<P> &dstPt, P m, std::vector<P> &srcPt) {
       for (int i = 0; i < D; i++) {
-        double c = srcPt[i];
+        P c = srcPt[i];
         dstPt[i] += m * (c * c);
       }
     }
@@ -126,20 +126,20 @@ namespace Gvm {
       }
     }
 
-    void subtractScaled(std::vector<P> &dstPt, double m, std::vector<P> &srcPt) {
+    void subtractScaled(std::vector<P> &dstPt, P m, std::vector<P> &srcPt) {
       for (int i = 0; i < D; i++) {
         dstPt[i] -= m * srcPt[i];
       }
     }
     
-    void subtractScaledSqr(std::vector<P> &dstPt, double m, std::vector<P> &srcPt) {
+    void subtractScaledSqr(std::vector<P> &dstPt, P m, std::vector<P> &srcPt) {
       for (int i = 0; i < D; i++) {
-        double c = srcPt[i];
+        P c = srcPt[i];
         dstPt[i] -= m * (c * c);
       }
     }
     
-    void scale(std::vector<P> &pt, double m) {
+    void scale(std::vector<P> &pt, P m) {
       for (int i = 0; i < D; i++) {
         pt[i] *= m;
       }
@@ -153,45 +153,45 @@ namespace Gvm {
 
     // optimizations
 
-    double distance(std::vector<P> &pt1, std::vector<P> &pt2) {
-      double sum = 0.0;
+    P distance(std::vector<P> &pt1, std::vector<P> &pt2) {
+      P sum = P(0.0);
       for (int i = 0; i < D; i++) {
-        double d = pt1[i] - pt2[i];
+        P d = pt1[i] - pt2[i];
         sum += d * d;
       }
       return sqrt(sum);
     }
     
-    double variance(double m, std::vector<P> &pt, std::vector<P> &ptSqr) {
-      double sum = 0.0;
-      const double mMult = P(1.0) / m;
+    P variance(P m, std::vector<P> &pt, std::vector<P> &ptSqr) {
+      P sum = P(0.0);
+      const P mMult = P(1.0) / m;
       for (int i = 0; i < D; i++) {
-        double c = pt[i];
+        P c = pt[i];
         sum += ptSqr[i] - ((c * c) * mMult);
       }
       return sum;
     }
 
-    double variance(double m1, std::vector<P> &pt1, std::vector<P> &ptSqr1, double m2, std::vector<P> pt2) {
-      const double m0 = m1 + m2;
-      const double m0Mult = P(1.0) / m0;
-      double sum = 0.0;
+    P variance(P m1, std::vector<P> &pt1, std::vector<P> &ptSqr1, P m2, std::vector<P> pt2) {
+      const P m0 = m1 + m2;
+      const P m0Mult = P(1.0) / m0;
+      P sum = P(0.0);
       for (int i = 0; i < D; i++) {
-        double c2 = pt2[i];
-        double c = pt1[i] + (m2 * c2);
-        double cSqr = ptSqr1[i] + (m2 * (c2 * c2));
+        P c2 = pt2[i];
+        P c = pt1[i] + (m2 * c2);
+        P cSqr = ptSqr1[i] + (m2 * (c2 * c2));
         sum += cSqr - ((c * c) * m0Mult);
       }
       return sum;
     }
 
-    double variance(double m1, std::vector<P> &pt1, std::vector<P> &ptSqr1, double m2, std::vector<P> pt2, std::vector<P> &ptSqr2) {
-      const double m0 = m1 + m2;
-      const double m0Mult = P(1.0) / m0;
-      double sum = 0.0;
+    P variance(P m1, std::vector<P> &pt1, std::vector<P> &ptSqr1, P m2, std::vector<P> pt2, std::vector<P> &ptSqr2) {
+      const P m0 = m1 + m2;
+      const P m0Mult = P(1.0) / m0;
+      P sum = P(0.0);
       for (int i = 0; i < D; i++) {
-        double c = pt1[i] + pt2[i];
-        double cSqr = ptSqr1[i] + ptSqr2[i];
+        P c = pt1[i] + pt2[i];
+        P cSqr = ptSqr1[i] + ptSqr2[i];
         sum += cSqr - ((c * c) * m0Mult);
       }
       return sum;

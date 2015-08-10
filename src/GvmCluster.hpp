@@ -54,7 +54,7 @@ namespace Gvm {
     
     // The total mass of this cluster.
     
-    double m0;
+    P m0;
     
     // The mass-weighted coordinate sum.
     
@@ -66,7 +66,7 @@ namespace Gvm {
 
     // The computed variance of this cluster.
     
-    double var;
+    P var;
 
     // The key associated with this cluster (can be nullptr).
     // Note that this ref is not a unique_ptr
@@ -82,7 +82,7 @@ namespace Gvm {
     {
       removed = false;
       count = 0;
-      m0 = 0.0;
+      m0 = P(0.0);
       m1 = clusters.space.newOrigin();
       m2 = clusters.space.newOrigin();
       
@@ -105,7 +105,7 @@ namespace Gvm {
     
     // The total mass of the cluster.
     
-    double getMass() {
+    P getMass() {
       return m0;
     }
     
@@ -117,7 +117,7 @@ namespace Gvm {
     
     // The computed variance of the cluster
     
-    double getVariance() {
+    P getVariance() {
       return var;
     }
     
@@ -134,10 +134,10 @@ namespace Gvm {
     
     void clear() {
       count = 0;
-      m0 = 0.0;
+      m0 = P(0.0);
       clusters.space.setToOrigin(m1);
       clusters.space.setToOrigin(m2);
-      var = 0.0;
+      var = P(0.0);
       key = nullptr;
     }
     
@@ -145,8 +145,8 @@ namespace Gvm {
     // m : the mass of the point
     // pt : the coordinates of the point
     
-    void set(double m, std::vector<P> &pt) {
-      if (m == 0.0) {
+    void set(P m, std::vector<P> &pt) {
+      if (m == P(0.0)) {
         if (count != 0) {
           clusters.space.setToOrigin(m1);
           clusters.space.setToOrigin(m2);
@@ -157,7 +157,7 @@ namespace Gvm {
       }
       count = 1;
       m0 = m;
-      var = 0.0;
+      var = P(0.0);
     }
 
     // Adds a point to the cluster.
@@ -165,13 +165,13 @@ namespace Gvm {
     // m : the mass of the point
     // pt : the coordinates of the point
     
-    void add(double m, std::vector<P> &pt) {
+    void add(P m, std::vector<P> &pt) {
       if (count == 0) {
         set(m, pt);
       } else {
         count += 1;
         
-        if (m != 0.0) {
+        if (m != P(0.0)) {
           m0 += m;
           clusters.space.addScaled(m1, m, pt);
           clusters.space.addScaledSqr(m2, m, pt);
@@ -223,8 +223,8 @@ namespace Gvm {
     // pt the coordinates of the point
     // return the variance of this cluster inclusive of the point
     
-    double test(double m, std::vector<P> &pt) {
-      return m0 == 0.0 && m == 0.0 ? 0.0 : clusters.space.variance(m0, m1, m2, m, pt) - var;
+    P test(P m, std::vector<P> &pt) {
+      return m0 == P(0.0) && m == P(0.0) ? P(0.0) : clusters.space.variance(m0, m1, m2, m, pt) - var;
     }
     
     // Computes the variance of a cluster that aggregated this cluster with the
@@ -236,14 +236,14 @@ namespace Gvm {
     
     //TODO: change for consistency with other test method : return increase in variance
     
-    double test(GvmCluster<S,K,P> &cluster) {
-      return m0 == 0.0 && cluster.m0 == 0.0 ? 0.0 : clusters.space.variance(m0, m1, m2, cluster.m0, cluster.m1, cluster.m2);
+    P test(GvmCluster<S,K,P> &cluster) {
+      return m0 == P(0.0) && cluster.m0 == P(0.0) ? P(0.0) : clusters.space.variance(m0, m1, m2, cluster.m0, cluster.m1, cluster.m2);
     }
     
     // Recompute this cluster's variance.
     
     void update() {
-      var = m0 == 0.0 ? 0.0 : clusters.space.variance(m0, m1, m2);
+      var = m0 == P(0.0) ? P(0.0) : clusters.space.variance(m0, m1, m2);
     }
     
   }; // end class GvmCluster
