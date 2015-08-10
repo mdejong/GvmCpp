@@ -13,82 +13,223 @@
 
 #include <iostream>
 
+#include <unordered_map>
+
 #import "Gvm.hpp"
 
 using namespace std;
 using namespace Gvm;
 
+// Load points from a file
+
+vector<vector<double> > loadPointsFromBGR(string filename)
+{
+  vector<vector<double> > allPoints;
+  
+  FILE *fp = fopen(filename.c_str(), "rb");
+  
+  fseek(fp, 0, SEEK_END);
+
+  int numBytes = (int) ftell(fp);
+
+  if (numBytes == 0) {
+    cerr << "empty input YUV file contains zero BGRA pixels" << endl;
+    exit(1);
+  }
+  
+  if ((numBytes % sizeof(uint32_t)) != 0) {
+    cerr << "input YUV must be a file with a whole number of BGRA pixels" << endl;
+    exit(1);
+  }
+
+  fseek(fp, 0, SEEK_SET);
+  
+  // In DEBUG mode, use unordered_map to check for duplicate pixels in the input
+  
+#if defined(DEBUG)
+  unordered_map<uint32_t, uint32_t> uniquePixelMap;
+#endif // DEBUG
+  
+  for (; numBytes > 0 ; numBytes -= 4) {
+    uint32_t pixel;
+    
+    int numRead = (int)fread(&pixel, sizeof(pixel), 1, fp);
+    if (numRead != 1) {
+      cerr << "could not read whole pixel from YUV input at offset " << ftell(fp) << endl;
+      exit(1);
+    }
+    
+    uint32_t B = pixel & 0xFF;
+    uint32_t G = (pixel >> 8) & 0xFF;
+    uint32_t R = (pixel >> 16) & 0xFF;
+    
+#if defined(DEBUG)
+    uint32_t pixelNoAlpha = (R << 16) | (G << 8) | B;
+    
+    if (uniquePixelMap.count(pixelNoAlpha) > 0) {
+      cerr << "input contains duplicate BGR pixel" << endl;
+      exit(1);
+    }
+#endif // DEBUG
+    
+    double x = B;
+    double y = G;
+    double z = R;
+    
+    vector<double> coords;
+    
+    coords.push_back(x);
+    coords.push_back(y);
+    coords.push_back(z);
+    
+    allPoints.push_back(coords);
+  }
+  
+  fclose(fp);
+  
+  return allPoints;
+}
+
 int main(int argc, char **argv) {
-//  fprintf(stdout, "hello world\n");
   
-  // The cluster "key" is a list of int values that correspond
-  // to a certain coordinate.
+  string filename = "/Users/modejong/Development/ImageCompression/GVMCluster/Lenna_int_order.yuv";
   
-  typedef void ClusterKey;
+  vector<vector<double> > allPoints = loadPointsFromBGR(filename);
+
+  cout << "read " << allPoints.size() << " pixels from " << filename << endl;
+  
+  typedef vector<vector<double> > ClusterKey;
   
   GvmVectorSpace<double> vspace(3);
   
-  const int numClusters = 2;
+  const int numClusters = 2048;
   
   GvmClusters<GvmVectorSpace<double>, ClusterKey, double> clusters(vspace, numClusters);
   
-  // Generate list of 3D points
+  GvmListKeyer<GvmVectorSpace<double>, ClusterKey, double> intListKeyer;
   
-  double p1[] = { 0.0, 0.0, 0.0 };
-  double p2[] = { 10.0, 10.0, 10.0 };
-  double p3[] = { 1.0, 1.0, 1.0 };
+  // Install key combiner for list of points, caller must manage ptr lifetime
   
-  vector<vector<double> > listOfPoints;
+  clusters.setKeyer(&intListKeyer);
   
-  vector<double> points;
+  // Insert each point into clusters. Each point is
+  // associated with a list of points called a "key".
+  // This key object lifetime must be managed by the caller
+  // for performance reasons.
   
-  points.clear();
-  points.push_back(p1[0]);
-  points.push_back(p1[1]);
-  points.push_back(p1[2]);
-  listOfPoints.push_back(points);
+  vector<ClusterKey> allKeys;
+  allKeys.reserve(allPoints.size());
   
-  points.clear();
-  points.push_back(p2[0]);
-  points.push_back(p2[1]);
-  points.push_back(p2[2]);
-  listOfPoints.push_back(points);
-  
-  points.clear();
-  points.push_back(p3[0]);
-  points.push_back(p3[1]);
-  points.push_back(p3[2]);
-  listOfPoints.push_back(points);
-  
-  for ( vector<double> & pt : listOfPoints ) {
+  for ( vector<double> & pt : allPoints ) {
     // Key is a list of (list of points)
-    cout << "clustering point " << pt[0] << " " << pt[1] << " " << pt[2] << endl;
-    clusters.add(1, pt, nullptr);
+    if (false) {
+    assert(pt.size() == 3);
+    cout << "clustering point (B G R) (" << pt[0] << " " << pt[1] << " " << pt[2] << ")" << endl;
+    }
+    
+    allKeys.push_back(ClusterKey ());
+    ClusterKey *key = &allKeys[allKeys.size() - 1];
+    key->push_back(pt);
+    
+    clusters.add(1, pt, key);
   }
   
   cout << "generated " << clusters.clusters.size() << " clusters" << endl;
+  
+  // Emit clustered results as YUV data padded out to 256 with zeros
   
   // vector<GvmResult>
   
   int clusteri = 0;
   
-  for ( auto & result : clusters.results() ) {
+  vector<GvmResult<GvmVectorSpace<double>, ClusterKey, double>> results = clusters.results();
+  
+  for ( auto & result : results ) {
     cout << "cluster[" << clusteri << "]: " << result.toString() << endl;
     clusteri++;
   }
   
-  // Reduce down to 1 cluster
+  // Write clustered pixels as YUV output
+  
+  int totalPixelsWritten = 0;
+  
+  string outYuvFilename = "out.yuv";
+  
+  FILE *outFP = fopen(outYuvFilename.c_str(), "wb");
+  
+  for (int i = 0; i < results.size(); i++) {
+    int clusterID = i; // keep to byte range
+    
+    ClusterKey *allKeys = results[i].getKey();
+    
+    cout << "cluster " << clusterID << " contains " << allKeys->size() << " pixels" << endl;
+    
+    int pixelsWritten = 0;
+    
+    for ( vector<double> &coord : *allKeys ) {
+      uint32_t x = coord[0];
+      uint32_t y = coord[1];
+      uint32_t z = coord[2];
+      
+      if (x < 0 || x > 255) {
+        assert(0);
+      }
+      if (y < 0 || y > 255) {
+        assert(0);
+      }
+      if (z < 0 || z > 255) {
+        assert(0);
+      }
+      
+      uint32_t B = int(x);
+      uint32_t G = int(y);
+      uint32_t R = int(z);
+      
+      uint32_t pixel = (R << 16) | (G << 8) | B;
 
-  cout << "reduce " << endl;
-  
-  clusters.reduce(-1.0, 1);
-  
-  clusteri = 0;
-  
-  for ( auto & result : clusters.results() ) {
-    cout << "cluster[" << clusteri << "]: " << result.toString() << endl;
-    clusteri++;
+      int numWritten = (int)fwrite(&pixel, sizeof(uint32_t), 1, outFP);
+      assert(numWritten == 1);
+      pixelsWritten++;
+    }
+    
+    totalPixelsWritten += pixelsWritten;
+    
+    if (true) {
+      // Pad each cluster out to 256
+      
+      int numPointsInCluster = pixelsWritten;
+      
+      int over = numPointsInCluster % 256;
+      int under = 0;
+      
+      if (over == 0) {
+        // Cluster of exactly 256 pixels, emit 256 zeros to indicate this case.
+        under = 256;
+      } else {
+        under = 256 - over;
+      }
+      
+      for (int j = 0; j < under; j++) {
+        uint32_t pixel = 0;
+        int numWritten = (int)fwrite(&pixel, sizeof(uint32_t), 1, outFP);
+        assert(numWritten == 1);
+        totalPixelsWritten++;
+      }
+    }
   }
+
+  fclose(outFP);
+  
+  cout << "wrote " << totalPixelsWritten << " total pixels to " << outYuvFilename << endl;
+  
+  int totalRowsOf256 = totalPixelsWritten/256;
+  if ((totalPixelsWritten % 256) != 0) {
+    assert(0);
+  }
+
+  cout << "wrote 256 x " << totalRowsOf256 << endl;
+  
+  cout << "as " << results.size() << " number of clusters" << endl;
   
   return 0;
 }
