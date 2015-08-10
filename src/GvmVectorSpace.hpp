@@ -97,7 +97,7 @@ namespace Gvm {
     void setToScaledSqr(std::vector<P> &dstPt, double m, std::vector<P> &srcPt) {
       for (int i = 0; i < D; i++) {
         double c = srcPt[i];
-        dstPt[i] = m * c * c;
+        dstPt[i] = m * (c * c);
       }
     }
 
@@ -116,7 +116,7 @@ namespace Gvm {
     void addScaledSqr(std::vector<P> &dstPt, double m, std::vector<P> &srcPt) {
       for (int i = 0; i < D; i++) {
         double c = srcPt[i];
-        dstPt[i] += m * c * c;
+        dstPt[i] += m * (c * c);
       }
     }
     
@@ -135,7 +135,7 @@ namespace Gvm {
     void subtractScaledSqr(std::vector<P> &dstPt, double m, std::vector<P> &srcPt) {
       for (int i = 0; i < D; i++) {
         double c = srcPt[i];
-        dstPt[i] -= m * c * c;
+        dstPt[i] -= m * (c * c);
       }
     }
     
@@ -164,32 +164,35 @@ namespace Gvm {
     
     double variance(double m, std::vector<P> &pt, std::vector<P> &ptSqr) {
       double sum = 0.0;
+      const double mMult = P(1.0) / m;
       for (int i = 0; i < D; i++) {
         double c = pt[i];
-        sum += ptSqr[i] - ((c * c) / m);
+        sum += ptSqr[i] - ((c * c) * mMult);
       }
       return sum;
     }
 
     double variance(double m1, std::vector<P> &pt1, std::vector<P> &ptSqr1, double m2, std::vector<P> pt2) {
-      double m0 = m1 + m2;
+      const double m0 = m1 + m2;
+      const double m0Mult = P(1.0) / m0;
       double sum = 0.0;
       for (int i = 0; i < D; i++) {
         double c2 = pt2[i];
         double c = pt1[i] + (m2 * c2);
-        double cSqr = ptSqr1[i] + (m2 * c2 * c2);
-        sum += cSqr - ((c * c) / m0);
+        double cSqr = ptSqr1[i] + (m2 * (c2 * c2));
+        sum += cSqr - ((c * c) * m0Mult);
       }
       return sum;
     }
 
     double variance(double m1, std::vector<P> &pt1, std::vector<P> &ptSqr1, double m2, std::vector<P> pt2, std::vector<P> &ptSqr2) {
-      double m0 = m1 + m2;
+      const double m0 = m1 + m2;
+      const double m0Mult = P(1.0) / m0;
       double sum = 0.0;
       for (int i = 0; i < D; i++) {
         double c = pt1[i] + pt2[i];
         double cSqr = ptSqr1[i] + ptSqr2[i];
-        sum += cSqr - ((c * c) / m0);
+        sum += cSqr - ((c * c) * m0Mult);
       }
       return sum;
     }

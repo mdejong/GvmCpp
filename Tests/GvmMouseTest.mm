@@ -345,4 +345,15 @@ using namespace Gvm;
 # undef ClusterVspace
 }
 
+/*
+
+- (void)testPerformanceExample {
+  // This is an example of a performance test case.
+  [self measureBlock:^{
+    [self testGvmMouse];
+  }];
+}
+
+*/
+ 
 @end
