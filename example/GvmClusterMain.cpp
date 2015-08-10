@@ -100,11 +100,9 @@ int main(int argc, char **argv) {
   
   typedef vector<vector<double> > ClusterKey;
 
-  typedef GvmVectorSpace<double> ClusterVspace;
-  //typedef GvmVectorSpace<double, 3> ClusterVspace;
+  typedef GvmVectorSpace<double, 3> ClusterVspace;
   
-  ClusterVspace vspace(3);
-  //ClusterVspace vspace;
+  ClusterVspace vspace;
   
   const int numClusters = 2048;
   

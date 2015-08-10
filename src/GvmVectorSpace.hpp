@@ -29,29 +29,27 @@ namespace Gvm {
   // that only the required amount of memory is needed
   // to represent a specific kind of point.
   
-  template<typename P>
+  template<typename P, int D>
   class GvmVectorSpace : public GvmSpace<P> {
   public:
-    
-    int dimensions;
     
     // The computed variance of the cluster
     
     int getDimensions() {
-      return dimensions;
+      return D;
     }
     
     // constructor
     
-    GvmVectorSpace<P>(int dimensions) {
-      assert(dimensions >= 1);
-      this->dimensions = dimensions;
+    GvmVectorSpace<P,D>()
+    {
+      assert(D >= 1);
     }
     
     // space factory methods
     
     std::vector<P> newOrigin() {
-      return std::vector<P>(dimensions);
+      return std::vector<P>(D);
     }
     
     std::vector<P> newCopy(std::vector<P> &pt) {
@@ -62,7 +60,8 @@ namespace Gvm {
     
     double magnitudeSqr(std::vector<P> &pt) {
       double sum = 0.0;
-      for ( P c : pt ) {
+      for (int i = 0; i < D; i++) {
+        P c = pt[i];
         sum += (double) (c * c);
       }
       return sum;
@@ -70,83 +69,84 @@ namespace Gvm {
 
     double sum(std::vector<P> &pt) {
       double sum = 0.0;
-      for ( P c : pt ) {
+      for (int i = 0; i < D; i++) {
+        P c = pt[i];
         sum += c;
       }
       return sum;
     }
     
     void setToOrigin(std::vector<P> &pt) {
-      for (int i = 0; i < dimensions; i++) {
+      for (int i = 0; i < D; i++) {
         pt[i] = 0.0;
       }
     }
 
     void setTo(std::vector<P> &dstPt, std::vector<P> &srcPt) {
-      for (int i = 0; i < dimensions; i++) {
+      for (int i = 0; i < D; i++) {
         dstPt[i] = srcPt[i];
       }
     }
 
     void setToScaled(std::vector<P> &dstPt, double m, std::vector<P> &srcPt) {
-      for (int i = 0; i < dimensions; i++) {
+      for (int i = 0; i < D; i++) {
         dstPt[i] = m * srcPt[i];
       }
     }
 
     void setToScaledSqr(std::vector<P> &dstPt, double m, std::vector<P> &srcPt) {
-      for (int i = 0; i < dimensions; i++) {
+      for (int i = 0; i < D; i++) {
         double c = srcPt[i];
         dstPt[i] = m * c * c;
       }
     }
 
     void add(std::vector<P> &dstPt, std::vector<P> &srcPt) {
-      for (int i = 0; i < dimensions; i++) {
+      for (int i = 0; i < D; i++) {
         dstPt[i] += srcPt[i];
       }
     }
 
     void addScaled(std::vector<P> &dstPt, double m, std::vector<P> &srcPt) {
-      for (int i = 0; i < dimensions; i++) {
+      for (int i = 0; i < D; i++) {
         dstPt[i] += m * srcPt[i];
       }
     }
 
     void addScaledSqr(std::vector<P> &dstPt, double m, std::vector<P> &srcPt) {
-      for (int i = 0; i < dimensions; i++) {
+      for (int i = 0; i < D; i++) {
         double c = srcPt[i];
         dstPt[i] += m * c * c;
       }
     }
     
     void subtract(std::vector<P> &dstPt, std::vector<P> &srcPt) {
-      for (int i = 0; i < dimensions; i++) {
+      for (int i = 0; i < D; i++) {
         dstPt[i] -= srcPt[i];
       }
     }
 
     void subtractScaled(std::vector<P> &dstPt, double m, std::vector<P> &srcPt) {
-      for (int i = 0; i < dimensions; i++) {
+      for (int i = 0; i < D; i++) {
         dstPt[i] -= m * srcPt[i];
       }
     }
     
     void subtractScaledSqr(std::vector<P> &dstPt, double m, std::vector<P> &srcPt) {
-      for (int i = 0; i < dimensions; i++) {
+      for (int i = 0; i < D; i++) {
         double c = srcPt[i];
         dstPt[i] -= m * c * c;
       }
     }
     
     void scale(std::vector<P> &pt, double m) {
-      for (int i = 0; i < dimensions; i++) {
+      for (int i = 0; i < D; i++) {
         pt[i] *= m;
       }
     }
 
     void square(std::vector<P> &pt) {
-      for (int i = 0; i < dimensions; i++) {
+      for (int i = 0; i < D; i++) {
         pt[i] *= pt[i];
       }
     }
@@ -155,7 +155,7 @@ namespace Gvm {
 
     double distance(std::vector<P> &pt1, std::vector<P> &pt2) {
       double sum = 0.0;
-      for (int i = 0; i < dimensions; i++) {
+      for (int i = 0; i < D; i++) {
         double d = pt1[i] - pt2[i];
         sum += d * d;
       }
@@ -164,7 +164,7 @@ namespace Gvm {
     
     double variance(double m, std::vector<P> &pt, std::vector<P> &ptSqr) {
       double sum = 0.0;
-      for (int i = 0; i < dimensions; i++) {
+      for (int i = 0; i < D; i++) {
         double c = pt[i];
         sum += ptSqr[i] - ((c * c) / m);
       }
@@ -174,7 +174,7 @@ namespace Gvm {
     double variance(double m1, std::vector<P> &pt1, std::vector<P> &ptSqr1, double m2, std::vector<P> pt2) {
       double m0 = m1 + m2;
       double sum = 0.0;
-      for (int i = 0; i < dimensions; i++) {
+      for (int i = 0; i < D; i++) {
         double c2 = pt2[i];
         double c = pt1[i] + (m2 * c2);
         double cSqr = ptSqr1[i] + (m2 * c2 * c2);
@@ -186,7 +186,7 @@ namespace Gvm {
     double variance(double m1, std::vector<P> &pt1, std::vector<P> &ptSqr1, double m2, std::vector<P> pt2, std::vector<P> &ptSqr2) {
       double m0 = m1 + m2;
       double sum = 0.0;
-      for (int i = 0; i < dimensions; i++) {
+      for (int i = 0; i < D; i++) {
         double c = pt1[i] + pt2[i];
         double cSqr = ptSqr1[i] + ptSqr2[i];
         sum += cSqr - ((c * c) / m0);
@@ -197,8 +197,8 @@ namespace Gvm {
     std::string toString(std::vector<P> &pt) {
       std::stringstream sb;
       
-      for (int i = 0; i < dimensions; i++) {
-        if (i < (dimensions-1)) {
+      for (int i = 0; i < D; i++) {
+        if (i < (D-1)) {
           sb << pt[i] << " ";
         } else {
           sb << pt[i];

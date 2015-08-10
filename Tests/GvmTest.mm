@@ -33,7 +33,7 @@ using namespace Gvm;
 - (void)testVectorSpace2D {
   // Create vector of double
   
-  GvmVectorSpace<double> vspace(2);
+  GvmVectorSpace<double, 2> vspace;
   XCTAssert(vspace.getDimensions() == 2, @"Pass");
   
   vector<double> vec = vspace.newOrigin();
@@ -181,19 +181,21 @@ using namespace Gvm;
   // to a certain coordinate.
   
 #define ClusterKey vector<vector<double> >
+#define ClusterVspace GvmVectorSpace<double,2>
   
-  GvmVectorSpace<double> vspace(2);
+  ClusterVspace vspace;
   
-  GvmClusters<GvmVectorSpace<double>, ClusterKey, double> clusters(vspace, 256);
+  GvmClusters<ClusterVspace, ClusterKey, double> clusters(vspace, 256);
   
-  GvmCluster<GvmVectorSpace<double>, ClusterKey, double> c1(clusters);
-  GvmCluster<GvmVectorSpace<double>, ClusterKey, double> c2(clusters);
+  GvmCluster<ClusterVspace, ClusterKey, double> c1(clusters);
+  GvmCluster<ClusterVspace, ClusterKey, double> c2(clusters);
   
-  GvmClusterPair<GvmVectorSpace<double>, ClusterKey, double> cPair(c1, c2);
+  GvmClusterPair<ClusterVspace, ClusterKey, double> cPair(c1, c2);
   
   XCTAssert(cPair.index == 0, @"Pass");
 
 #undef ClusterKey
+#undef ClusterVspace
 }
 
 - (void)testGvmClusterPair2D {
@@ -202,10 +204,11 @@ using namespace Gvm;
   // to a certain coordinate.
   
 # define ClusterKey vector<vector<double> >
+# define ClusterVspace GvmVectorSpace<double,2>
   
-  GvmVectorSpace<double> vspace(2);
+  ClusterVspace vspace;
   
-  GvmClusters<GvmVectorSpace<double>, ClusterKey, double> clusters(vspace, 256);
+  GvmClusters<ClusterVspace, ClusterKey, double> clusters(vspace, 256);
 
   // Generate list of 2D points
   
@@ -242,7 +245,7 @@ using namespace Gvm;
   
   // Install key combiner for list of points, caller must manage ptr lifetime
   
-  GvmListKeyer<GvmVectorSpace<double>, ClusterKey, double> intListKeyer;
+  GvmListKeyer<ClusterVspace, ClusterKey, double> intListKeyer;
   clusters.setKeyer(&intListKeyer);
   
   for ( vector<double> & pt : listOfPoints ) {
@@ -259,7 +262,7 @@ using namespace Gvm;
   
   // Only 3 clusters are actually used since there are only 3 input points
   
-  vector<GvmResult<GvmVectorSpace<double>, ClusterKey, double>> results = clusters.results();
+  vector<GvmResult<ClusterVspace, ClusterKey, double>> results = clusters.results();
   
   XCTAssert(results.size() == 3);
   
@@ -272,6 +275,7 @@ using namespace Gvm;
   XCTAssert(results.size() == 1);
   
 # undef ClusterKey
+# undef ClusterVspace
 }
 
 // Create cluster with 3D pixel values and no custom key combiner.
@@ -281,10 +285,11 @@ using namespace Gvm;
   // In this case, no specific key is used so padd void as key type
   
 # define ClusterKey void
+# define ClusterVspace GvmVectorSpace<double,3>
   
-  GvmVectorSpace<double> vspace(3);
+  ClusterVspace vspace;
   
-  GvmClusters<GvmVectorSpace<double>, ClusterKey, double> clusters(vspace, 256);
+  GvmClusters<ClusterVspace, ClusterKey, double> clusters(vspace, 256);
   
   // Generate list of 3D points
   
@@ -326,7 +331,7 @@ using namespace Gvm;
   
   // Only 3 clusters are actually used since there are only 3 input points
   
-  vector<GvmResult<GvmVectorSpace<double>, ClusterKey, double>> results = clusters.results();
+  vector<GvmResult<ClusterVspace, ClusterKey, double>> results = clusters.results();
   
   XCTAssert(results.size() == 3);
   
@@ -339,6 +344,7 @@ using namespace Gvm;
   XCTAssert(results.size() == 1);
   
 # undef ClusterKey
+# undef ClusterVspace
 }
 
 /*

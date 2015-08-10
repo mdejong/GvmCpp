@@ -29,14 +29,6 @@ namespace Gvm {
       return v < 0.0 ? 0.0 : v;
     }
     
-    virtual std::vector<P> newOrigin() = 0;
-    
-    virtual std::vector<P> newCopy(std::vector<P> &pt) = 0;
-    
-    virtual double magnitudeSqr(std::vector<P> &pt) = 0;
-    
-    virtual double sum(std::vector<P> &pt) = 0;
-    
     //not used directly in algorithm, but useful - override for good performance
     
     double magnitude(std::vector<P> &pt)
@@ -52,12 +44,6 @@ namespace Gvm {
       subtract(p, pt2);
       return magnitude(p);
     }
-    
-    virtual double variance(double m, std::vector<P> &pt, std::vector<P> &ptSqr) = 0;
-    
-    virtual double variance(double m1, std::vector<P> &pt1, std::vector<P> &ptSqr1, double m2, std::vector<P> pt2) = 0;
-    
-    virtual double variance(double m1, std::vector<P> &pt1, std::vector<P> &ptSqr1, double m2, std::vector<P> pt2, std::vector<P> &ptSqr2) = 0;
     
   }; // end class GvmSpace
 

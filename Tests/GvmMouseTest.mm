@@ -262,12 +262,13 @@ using namespace Gvm;
   // to a certain coordinate.
   
 # define ClusterKey vector<vector<double> >
+# define ClusterVspace GvmVectorSpace<double,2>
   
   // 2D data clustered into 3 clusters
   
-  GvmVectorSpace<double> vspace(2);
+  ClusterVspace vspace;
   
-  GvmClusters<GvmVectorSpace<double>, ClusterKey, double> clusters(vspace, 3);
+  GvmClusters<ClusterVspace, ClusterKey, double> clusters(vspace, 3);
   
   vector<vector<double> > listOfPoints = [self getTestSampleVec];
   
@@ -277,7 +278,7 @@ using namespace Gvm;
   
   // 3 clusters
   
-  vector<GvmResult<GvmVectorSpace<double>, ClusterKey, double>> results = clusters.results();
+  vector<GvmResult<ClusterVspace, ClusterKey, double>> results = clusters.results();
   
   XCTAssert(results.size() == 3);
   
@@ -341,6 +342,7 @@ using namespace Gvm;
   XCTAssert(int(round(cy * 10.0)) == 41);
   
 # undef ClusterKey
+# undef ClusterVspace
 }
 
 @end
