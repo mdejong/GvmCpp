@@ -158,6 +158,10 @@ namespace Gvm {
       if (newCapacity < 0) newCapacity = std::numeric_limits<int32_t>::max();
       if (newCapacity < minCapacity) newCapacity = minCapacity;
       pairs.reserve(newCapacity);
+      for (int i=oldCapacity; i < newCapacity; i++) {
+        pairs.push_back(nullptr);
+      }
+      assert(pairs.size() == newCapacity);
     }
     
     int indexOf(std::shared_ptr<GvmClusterPair<S,V,K,FP> > &pair) {
