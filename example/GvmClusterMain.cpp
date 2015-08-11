@@ -203,7 +203,7 @@ int main(int argc, char **argv) {
       uint32_t G = int(y);
       uint32_t R = int(z);
       
-      uint32_t pixel = (R << 16) | (G << 8) | B;
+      uint32_t pixel = (0xFF << 24) | (R << 16) | (G << 8) | B;
 
       int numWritten = (int)fwrite(&pixel, sizeof(uint32_t), 1, outFP);
       assert(numWritten == 1);
@@ -248,6 +248,9 @@ int main(int argc, char **argv) {
   cout << "wrote 256 x " << totalRowsOf256 << endl;
   
   cout << "as " << results.size() << " number of clusters" << endl;
+  
+  // In the combination phase, pixels split into clusters are combined based on calculation
+  // of distances from one cluster center to the next.
   
   return 0;
 }
