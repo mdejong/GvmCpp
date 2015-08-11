@@ -123,9 +123,11 @@ namespace Gvm {
     void reprioritize(std::shared_ptr<GvmClusterPair<S,V,K,FP> > &pair) {
       GvmClusterPair<S,V,K,FP> &pairObj = *(pair.get());
       int i = indexOf(pair);
+#if defined(DEBUG)
       if (i == -1) {
         assert(0);
       }
+#endif // DEBUG
       pairObj.update();
       std::shared_ptr<GvmClusterPair<S,V,K,FP> > *parent = (i == 0) ? nullptr : &pairs[ ushift_right(i - 1) ];
       if (parent != nullptr && parent->get()->value > pairObj.value) {
