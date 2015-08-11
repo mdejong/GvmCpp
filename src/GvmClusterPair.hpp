@@ -14,35 +14,33 @@
 #import "GvmCommon.hpp"
 
 namespace Gvm {
-
   // S
-  // Specific subclass that implements GvmSpace
+  //
+  // Cluster vector space.
+  
+  // V
+  //
+  // Cluster vector type.
   
   // K
   //
-  // Type of key
+  // Type of key.
   
-  // P
+  // FP
   //
-  // Point type. For example a 2D set of points could be
-  // represented by a type that was large enough to support
-  // 2 float or double numbers. There can be many instances
-  // of a point and a copy operation should be a fast as
-  // possible so this type should be space optimized so
-  // that only the required amount of memory is needed
-  // to represent a specific kind of point.
+  // Floating point type.
   
-  template<typename S, typename K, typename P>
+  template<typename S, typename V, typename K, typename FP>
   class GvmClusterPair {
   public:
     
     // The first cluster in this collection.
     
-    GvmCluster<S,K,P> &c1;
+    GvmCluster<S,V,K,FP> &c1;
     
     // The second cluster in this collection.
     
-    GvmCluster<S,K,P> &c2;
+    GvmCluster<S,V,K,FP> &c2;
 
     // The index of this pair within a heap of pairs.
     
@@ -50,14 +48,14 @@ namespace Gvm {
 
     // The amount the global variance would increase if this pair was merged.
     
-    P value;
+    FP value;
     
     // Constructs a new pair and computes its value.
     //
     // @param c1 a cluster, not equal to c2
     // @param c2 a cluster, not equal to c1
     
-    GvmClusterPair<S,K,P>(GvmCluster<S,K,P> &inC1, GvmCluster<S,K,P> &inC2)
+    GvmClusterPair<S,V,K,FP>(GvmCluster<S,V,K,FP> &inC1, GvmCluster<S,V,K,FP> &inC2)
     : c1(inC1), c2(inC2), index(0)
     {
       if (&inC1 == &inC2) {

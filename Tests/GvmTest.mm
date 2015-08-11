@@ -31,20 +31,24 @@ using namespace Gvm;
 }
 
 - (void)testVectorSpace2D {
-  // Create vector of double
+  // 2D vector of double
   
-  GvmVectorSpace<double, 2> vspace;
+# define FP double
+# define ClusterVector GvmStdVector<FP,2>
+# define ClusterVectorSpace GvmVectorSpace<ClusterVector,FP,2>
+  
+  ClusterVectorSpace vspace;
   XCTAssert(vspace.getDimensions() == 2, @"Pass");
   
-  vector<double> vec = vspace.newOrigin();
-  XCTAssert(vec.size() == 2, @"Pass");
+  ClusterVector vec = vspace.newOrigin();
+  XCTAssert(vec.getDimensions() == 2, @"Pass");
 
-  vector<double> vec1;
-  vec1.push_back(1);
-  vec1.push_back(2);
+  ClusterVector vec1;
+  vec1[0] = 1;
+  vec1[1] = 2;
   
-  vector<double> vec2 = vspace.newCopy(vec1);
-  XCTAssert(vec2.size() == 2, @"Pass");
+  ClusterVector vec2 = vspace.newCopy(vec1);
+  XCTAssert(vec2.getDimensions() == 2, @"Pass");
   XCTAssert(vec2[0] == 1, @"Pass");
   XCTAssert(vec2[1] == 2, @"Pass");
   
@@ -67,7 +71,7 @@ using namespace Gvm;
   XCTAssert(vec2[0] == (2.0 * 1.0 * 1.0), @"Pass");
   XCTAssert(vec2[1] == (2.0 * 2.0 * 2.0), @"Pass");
   
-  vector<double> sum = vspace.newOrigin();
+  ClusterVector sum = vspace.newOrigin();
   vspace.add(sum, vec1);
   XCTAssert(sum[0] == 1, @"Pass");
   XCTAssert(sum[1] == 2, @"Pass");
@@ -137,7 +141,7 @@ using namespace Gvm;
   vec1[0] = 1;
   vec1[1] = 2;
   
-  vector<double> sq1 = vspace.newOrigin();
+  ClusterVector sq1 = vspace.newOrigin();
   sq1[0] = 1;
   sq1[1] = 2*2;
   
@@ -159,7 +163,7 @@ using namespace Gvm;
   vec2[0] = 2;
   vec2[1] = 3;
   
-  vector<double> sq2 = vspace.newOrigin();
+  ClusterVector sq2 = vspace.newOrigin();
   
   sq2[0] = 2*2;
   sq2[1] = 3*3;
@@ -171,6 +175,10 @@ using namespace Gvm;
   // Convert points to string
   string str = vspace.toString(vec1);
   XCTAssert(str == "1 2", @"Pass");
+
+#undef FP
+#undef ClusterVector
+#undef ClusterVectorSpace
 }
 
 // Create instances of different objects
@@ -180,22 +188,26 @@ using namespace Gvm;
   // The cluster "key" is a list of int values that correspond
   // to a certain coordinate.
   
-#define ClusterKey vector<vector<double> >
-#define ClusterVspace GvmVectorSpace<double,2>
+# define FP double
+# define ClusterVector GvmStdVector<FP,2>
+# define ClusterVectorSpace GvmVectorSpace<ClusterVector,FP,2>
+# define ClusterKey vector<ClusterVector>
   
-  ClusterVspace vspace;
+  ClusterVectorSpace vspace;
   
-  GvmClusters<ClusterVspace, ClusterKey, double> clusters(vspace, 256);
+  GvmClusters<ClusterVectorSpace, ClusterVector, ClusterKey, FP> clusters(vspace, 256);
   
-  GvmCluster<ClusterVspace, ClusterKey, double> c1(clusters);
-  GvmCluster<ClusterVspace, ClusterKey, double> c2(clusters);
+  GvmCluster<ClusterVectorSpace, ClusterVector, ClusterKey, FP> c1(clusters);
+  GvmCluster<ClusterVectorSpace, ClusterVector, ClusterKey, FP> c2(clusters);
   
-  GvmClusterPair<ClusterVspace, ClusterKey, double> cPair(c1, c2);
+  GvmClusterPair<ClusterVectorSpace, ClusterVector, ClusterKey, FP> cPair(c1, c2);
   
   XCTAssert(cPair.index == 0, @"Pass");
 
+#undef FP
+#undef ClusterVector
+#undef ClusterVectorSpace
 #undef ClusterKey
-#undef ClusterVspace
 }
 
 - (void)testGvmClusterPair2D {
@@ -203,12 +215,16 @@ using namespace Gvm;
   // The cluster "key" is a list of int values that correspond
   // to a certain coordinate.
   
-# define ClusterKey vector<vector<double> >
-# define ClusterVspace GvmVectorSpace<double,2>
+# define FP double
+# define ClusterVector GvmStdVector<FP,2>
+# define ClusterVectorSpace GvmVectorSpace<ClusterVector,FP,2>
+# define ClusterKey vector<ClusterVector>
   
-  ClusterVspace vspace;
+    //typedef vector<ClusterVector> ClusterKey;
   
-  GvmClusters<ClusterVspace, ClusterKey, double> clusters(vspace, 256);
+  ClusterVectorSpace vspace;
+  
+  GvmClusters<ClusterVectorSpace, ClusterVector, ClusterKey, FP> clusters(vspace, 256);
 
   // Generate list of 2D points
   
@@ -216,24 +232,21 @@ using namespace Gvm;
   double p2[] = { 1.0, 1.0 };
   double p3[] = { 2.0, 2.0 };
   
-  vector<vector<double> > listOfPoints;
+  vector<ClusterVector> listOfPoints;
   
-  vector<double> points;
-  
-  points.clear();
-  points.push_back(p1[0]);
-  points.push_back(p1[1]);
-  listOfPoints.push_back(points);
-  
-  points.clear();
-  points.push_back(p2[0]);
-  points.push_back(p2[1]);
+  ClusterVector points;
+
+  points[0] = p1[0];
+  points[1] = p1[1];
   listOfPoints.push_back(points);
 
-  points.clear();
-  points.push_back(p3[0]);
-  points.push_back(p3[1]);
-  listOfPoints.push_back(points);    
+  points[0] = p2[0];
+  points[1] = p2[1];
+  listOfPoints.push_back(points);
+
+  points[0] = p3[0];
+  points[1] = p3[1];
+  listOfPoints.push_back(points);
   
   // Insert each point into clusters. Each point is
   // associated with a list of points called a "key".
@@ -245,10 +258,10 @@ using namespace Gvm;
   
   // Install key combiner for list of points, caller must manage ptr lifetime
   
-  GvmListKeyer<ClusterVspace, ClusterKey, double> intListKeyer;
+  GvmListKeyer<ClusterVectorSpace, ClusterVector, ClusterKey, FP> intListKeyer;
   clusters.setKeyer(&intListKeyer);
   
-  for ( vector<double> & pt : listOfPoints ) {
+  for ( ClusterVector & pt : listOfPoints ) {
     // Key is a list of (list of points)
     allKeys.push_back(ClusterKey ());
     ClusterKey *key = &allKeys[allKeys.size() - 1];
@@ -262,7 +275,7 @@ using namespace Gvm;
   
   // Only 3 clusters are actually used since there are only 3 input points
   
-  vector<GvmResult<ClusterVspace, ClusterKey, double>> results = clusters.results();
+  vector<GvmResult<ClusterVectorSpace, ClusterVector, ClusterKey, FP> > results = clusters.results();
   
   XCTAssert(results.size() == 3);
   
@@ -274,8 +287,10 @@ using namespace Gvm;
   
   XCTAssert(results.size() == 1);
   
-# undef ClusterKey
-# undef ClusterVspace
+#undef FP
+#undef ClusterVector
+#undef ClusterVectorSpace
+#undef ClusterKey
 }
 
 // Create cluster with 3D pixel values and no custom key combiner.
@@ -284,12 +299,14 @@ using namespace Gvm;
   
   // In this case, no specific key is used so padd void as key type
   
+# define FP double
+# define ClusterVector GvmStdVector<FP,3>
+# define ClusterVectorSpace GvmVectorSpace<ClusterVector,FP,3>
 # define ClusterKey void
-# define ClusterVspace GvmVectorSpace<double,3>
   
-  ClusterVspace vspace;
+  ClusterVectorSpace vspace;
   
-  GvmClusters<ClusterVspace, ClusterKey, double> clusters(vspace, 256);
+  GvmClusters<ClusterVectorSpace, ClusterVector, ClusterKey, FP> clusters(vspace, 256);
   
   // Generate list of 3D points
   
@@ -297,31 +314,28 @@ using namespace Gvm;
   double p2[] = { 1.0, 1.0, 2.0 };
   double p3[] = { 2.0, 2.0, 2.0 };
   
-  vector<vector<double> > listOfPoints;
+  vector<ClusterVector> listOfPoints;
   
-  vector<double> points;
+  ClusterVector points;
   
-  points.clear();
-  points.push_back(p1[0]);
-  points.push_back(p1[1]);
-  points.push_back(p1[2]);
+  points[0] = p1[0];
+  points[1] = p1[1];
+  points[2] = p1[2];
   listOfPoints.push_back(points);
   
-  points.clear();
-  points.push_back(p2[0]);
-  points.push_back(p2[1]);
-  points.push_back(p2[2]);
+  points[0] = p2[0];
+  points[1] = p2[1];
+  points[2] = p2[2];
   listOfPoints.push_back(points);
   
-  points.clear();
-  points.push_back(p3[0]);
-  points.push_back(p3[1]);
-  points.push_back(p3[2]);
+  points[0] = p3[0];
+  points[1] = p3[1];
+  points[2] = p3[2];
   listOfPoints.push_back(points);
   
   // Insert each point into clusters without keys
   
-  for ( vector<double> & pt : listOfPoints ) {
+  for ( ClusterVector & pt : listOfPoints ) {
     clusters.add(1, pt, nullptr);
   }
   
@@ -331,7 +345,7 @@ using namespace Gvm;
   
   // Only 3 clusters are actually used since there are only 3 input points
   
-  vector<GvmResult<ClusterVspace, ClusterKey, double>> results = clusters.results();
+  vector<GvmResult<ClusterVectorSpace, ClusterVector, ClusterKey, FP>> results = clusters.results();
   
   XCTAssert(results.size() == 3);
   
@@ -343,8 +357,10 @@ using namespace Gvm;
   
   XCTAssert(results.size() == 1);
   
-# undef ClusterKey
-# undef ClusterVspace
+#undef FP
+#undef ClusterVector
+#undef ClusterVectorSpace
+#undef ClusterKey
 }
 
 /*

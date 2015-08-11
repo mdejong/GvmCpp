@@ -21,9 +21,16 @@ using namespace Gvm;
 
 @end
 
+// Setup template parameters for 2D coordinates
+
+# define FP double
+# define ClusterVector GvmStdVector<FP,2>
+# define ClusterVectorSpace GvmVectorSpace<ClusterVector,FP,2>
+# define ClusterKey vector<ClusterVector>
+
 @implementation GvmMouseTest
 
-- (vector<vector<double> >) getTestSampleVec
+- (vector<ClusterVector>) getTestSampleVec
 {
   double data2D[] = {
     0.33,-4.561,
@@ -228,15 +235,16 @@ using namespace Gvm;
     1.898,4.452
   };
   
-  vector<vector<double> > coordsVec;
+  vector<ClusterVector> coordsVec;
   
   for (int i = 0; i < sizeof(data2D)/sizeof(double); i+= 2) {
     double x = data2D[i];
     double y = data2D[i+1];
     
-    vector<double> coords;
-    coords.push_back(x);
-    coords.push_back(y);
+    ClusterVector coords;
+    
+    coords[0] = x;
+    coords[1] = y;
     
     coordsVec.push_back(coords);
   }
@@ -257,28 +265,22 @@ using namespace Gvm;
 }
 
 - (void)testGvmMouse {
-
-  // The cluster "key" is a list of int values that correspond
-  // to a certain coordinate.
-  
-# define ClusterKey vector<vector<double> >
-# define ClusterVspace GvmVectorSpace<double,2>
   
   // 2D data clustered into 3 clusters
   
-  ClusterVspace vspace;
+  ClusterVectorSpace vspace;
   
-  GvmClusters<ClusterVspace, ClusterKey, double> clusters(vspace, 3);
+  GvmClusters<ClusterVectorSpace, ClusterVector, ClusterKey, FP> clusters(vspace, 3);
   
-  vector<vector<double> > listOfPoints = [self getTestSampleVec];
+  vector<ClusterVector> listOfPoints = [self getTestSampleVec];
   
-  for ( vector<double> & pt : listOfPoints ) {
+  for ( ClusterVector & pt : listOfPoints ) {
     clusters.add(1, pt, nullptr);
   }
   
   // 3 clusters
   
-  vector<GvmResult<ClusterVspace, ClusterKey, double>> results = clusters.results();
+  vector<GvmResult<ClusterVectorSpace, ClusterVector, ClusterKey, FP>> results = clusters.results();
   
   XCTAssert(results.size() == 3);
   
@@ -340,9 +342,6 @@ using namespace Gvm;
   cy = result2.point[1];
   XCTAssert(int(round(cx * 10.0)) == -26);
   XCTAssert(int(round(cy * 10.0)) == 41);
-  
-# undef ClusterKey
-# undef ClusterVspace
 }
 
 /*
@@ -355,5 +354,10 @@ using namespace Gvm;
 }
 
 */
- 
+
+#undef FP
+#undef ClusterVector
+#undef ClusterVectorSpace
+#undef ClusterKey
+
 @end

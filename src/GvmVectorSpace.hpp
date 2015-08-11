@@ -13,24 +13,25 @@
 
 #import "GvmCommon.hpp"
 
-#import "GvmSpace.hpp"
-
 #import <tgmath.h>
 
 namespace Gvm {
   
-  // P
+  // FP
   //
-  // Point type. For example a 2D set of points could be
-  // represented by a type that was large enough to support
-  // 2 float or double numbers. There can be many instances
-  // of a point and a copy operation should be a fast as
-  // possible so this type should be space optimized so
-  // that only the required amount of memory is needed
-  // to represent a specific kind of point.
+  // Floating point type that store the results of calculations
+  // based on points. This floating point type could be float
+  // or double.
   
-  template<typename P, int D>
-  class GvmVectorSpace : public GvmSpace<P> {
+  // V
+  //
+  // Vector of points type, a point is typically 2 or 3
+  // values that represent (X,Y) or (X,Y,Z) coordinates
+  // in 2D or 3D space. The type passed as V should
+  // extend the GvmVector interface.
+  
+  template<typename V, typename FP, int D>
+  class GvmVectorSpace {
   public:
     
     // The computed variance of the cluster
@@ -41,174 +42,171 @@ namespace Gvm {
     
     // constructor
     
-    GvmVectorSpace<P,D>()
+    GvmVectorSpace<FP,D>()
     {
       assert(D >= 1);
     }
     
     // space factory methods
     
-    std::vector<P> newOrigin() {
-      return std::vector<P>(D);
+    V newOrigin() {
+      // Invoke default constructor
+      return V();
     }
     
-    std::vector<P> newCopy(std::vector<P> &pt) {
-      return std::vector<P>(pt);
+    V newCopy(V &pt) {
+      // Invoke copy constructor
+      return V(pt);
     }
     
     // space point operations
     
-    P magnitudeSqr(std::vector<P> &pt) {
-      P sum = P(0.0);
+    FP magnitudeSqr(V &pt) {
+      FP sum = FP(0.0);
       for (int i = 0; i < D; i++) {
-        P c = pt[i];
-        sum += (c * c);
+        // sum += (pt[i] * pt[i]);
+        sum += pt.iSquared(i);
       }
       return sum;
     }
 
-    P sum(std::vector<P> &pt) {
-      P sum = P(0.0);
+    FP sum(V &pt) {
+      FP sum = FP(0.0);
       for (int i = 0; i < D; i++) {
-        P c = pt[i];
+        FP c = pt[i];
         sum += c;
       }
       return sum;
     }
     
-    void setToOrigin(std::vector<P> &pt) {
+    void setToOrigin(V &pt) {
       for (int i = 0; i < D; i++) {
-        pt[i] = P(0.0);
+        pt[i] = FP(0.0);
       }
     }
 
-    void setTo(std::vector<P> &dstPt, std::vector<P> &srcPt) {
+    void setTo(V &dstPt, V &srcPt) {
       for (int i = 0; i < D; i++) {
         dstPt[i] = srcPt[i];
       }
     }
 
-    void setToScaled(std::vector<P> &dstPt, P m, std::vector<P> &srcPt) {
+    void setToScaled(V &dstPt, FP m, V &srcPt) {
       for (int i = 0; i < D; i++) {
         dstPt[i] = m * srcPt[i];
       }
     }
 
-    void setToScaledSqr(std::vector<P> &dstPt, P m, std::vector<P> &srcPt) {
+    void setToScaledSqr(V &dstPt, FP m, V &srcPt) {
       for (int i = 0; i < D; i++) {
-        P c = srcPt[i];
-        dstPt[i] = m * (c * c);
+        // dstPt[i] = (srcPt[i] * srcPt[i]);
+        dstPt[i] = m * srcPt.iSquared(i);
       }
     }
 
-    void add(std::vector<P> &dstPt, std::vector<P> &srcPt) {
+    void add(V &dstPt, V &srcPt) {
       for (int i = 0; i < D; i++) {
         dstPt[i] += srcPt[i];
       }
     }
 
-    void addScaled(std::vector<P> &dstPt, P m, std::vector<P> &srcPt) {
+    void addScaled(V &dstPt, FP m, V &srcPt) {
       for (int i = 0; i < D; i++) {
         dstPt[i] += m * srcPt[i];
       }
     }
 
-    void addScaledSqr(std::vector<P> &dstPt, P m, std::vector<P> &srcPt) {
+    void addScaledSqr(V &dstPt, FP m, V &srcPt) {
       for (int i = 0; i < D; i++) {
-        P c = srcPt[i];
-        dstPt[i] += m * (c * c);
+        // dstPt[i] += m * (srcPt[i] * srcPt[i]);
+        dstPt[i] += m * srcPt.iSquared(i);
       }
     }
     
-    void subtract(std::vector<P> &dstPt, std::vector<P> &srcPt) {
+    void subtract(V &dstPt, V &srcPt) {
       for (int i = 0; i < D; i++) {
         dstPt[i] -= srcPt[i];
       }
     }
 
-    void subtractScaled(std::vector<P> &dstPt, P m, std::vector<P> &srcPt) {
+    void subtractScaled(V &dstPt, FP m, V &srcPt) {
       for (int i = 0; i < D; i++) {
         dstPt[i] -= m * srcPt[i];
       }
     }
     
-    void subtractScaledSqr(std::vector<P> &dstPt, P m, std::vector<P> &srcPt) {
+    void subtractScaledSqr(V &dstPt, FP m, V &srcPt) {
       for (int i = 0; i < D; i++) {
-        P c = srcPt[i];
-        dstPt[i] -= m * (c * c);
+        // dstPt[i] -= m * (srcPt[i] * srcPt[i]);
+        dstPt[i] -= m * srcPt.iSquared(i);
       }
     }
     
-    void scale(std::vector<P> &pt, P m) {
+    void scale(V &pt, FP m) {
       for (int i = 0; i < D; i++) {
         pt[i] *= m;
       }
     }
 
-    void square(std::vector<P> &pt) {
+    void square(V &pt) {
       for (int i = 0; i < D; i++) {
         pt[i] *= pt[i];
       }
     }
 
-    // optimizations
-
-    P distance(std::vector<P> &pt1, std::vector<P> &pt2) {
-      P sum = P(0.0);
+    // Note that this distance method is not used in the implementation
+    // since it is much more effective to use delta squared directly.
+    
+    FP distance(V &pt1, V &pt2) {
+      FP sum = FP(0.0);
       for (int i = 0; i < D; i++) {
-        P d = pt1[i] - pt2[i];
+        FP d = pt1[i] - pt2[i];
         sum += d * d;
       }
       return sqrt(sum);
     }
     
-    P variance(P m, std::vector<P> &pt, std::vector<P> &ptSqr) {
-      P sum = P(0.0);
-      const P mMult = P(1.0) / m;
+    // optimizations
+
+    // FIXME: make optimized versions of functions below
+    
+    FP variance(FP m, V &pt, V &ptSqr) {
+      FP sum = FP(0.0);
+      const FP mMult = FP(1.0) / m;
       for (int i = 0; i < D; i++) {
-        P c = pt[i];
+        FP c = pt[i];
         sum += ptSqr[i] - ((c * c) * mMult);
       }
       return sum;
     }
 
-    P variance(P m1, std::vector<P> &pt1, std::vector<P> &ptSqr1, P m2, std::vector<P> &pt2) {
-      const P m0 = m1 + m2;
-      const P m0Mult = P(1.0) / m0;
-      P sum = P(0.0);
+    FP variance(FP m1, V &pt1, V &ptSqr1, FP m2, V &pt2) {
+      const FP m0 = m1 + m2;
+      const FP m0Mult = FP(1.0) / m0;
+      FP sum = FP(0.0);
       for (int i = 0; i < D; i++) {
-        P c2 = pt2[i];
-        P c = pt1[i] + (m2 * c2);
-        P cSqr = ptSqr1[i] + (m2 * (c2 * c2));
+        FP c2 = pt2[i];
+        FP c = pt1[i] + (m2 * c2);
+        FP cSqr = ptSqr1[i] + (m2 * (c2 * c2));
         sum += cSqr - ((c * c) * m0Mult);
       }
       return sum;
     }
 
-    P variance(P m1, std::vector<P> &pt1, std::vector<P> &ptSqr1, P m2, std::vector<P> &pt2, std::vector<P> &ptSqr2) {
-      const P m0 = m1 + m2;
-      const P m0Mult = P(1.0) / m0;
-      P sum = P(0.0);
+    FP variance(FP m1, V &pt1, V &ptSqr1, FP m2, V &pt2, V &ptSqr2) {
+      const FP m0 = m1 + m2;
+      const FP m0Mult = FP(1.0) / m0;
+      FP sum = FP(0.0);
       for (int i = 0; i < D; i++) {
-        P c = pt1[i] + pt2[i];
-        P cSqr = ptSqr1[i] + ptSqr2[i];
+        FP c = pt1[i] + pt2[i];
+        FP cSqr = ptSqr1[i] + ptSqr2[i];
         sum += cSqr - ((c * c) * m0Mult);
       }
       return sum;
     }
 
-    std::string toString(std::vector<P> &pt) {
-      std::stringstream sb;
-      
-      for (int i = 0; i < D; i++) {
-        if (i < (D-1)) {
-          sb << pt[i] << " ";
-        } else {
-          sb << pt[i];
-        }
-      }
-      
-      return sb.str();
+    std::string toString(V &pt) {
+      return pt.toString();
     }
     
   }; // end class GvmVectorSpace

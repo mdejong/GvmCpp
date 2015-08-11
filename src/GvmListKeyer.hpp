@@ -19,26 +19,26 @@
 
 namespace Gvm {
   // S
+  //
+  // Cluster vector space.
+  
+  // V
+  //
+  // Cluster vector type.
   
   // K
   //
-  // Type of key
+  // Type of key.
   
-  // P
+  // FP
   //
-  // Point type. For example a 2D set of points could be
-  // represented by a type that was large enough to support
-  // 2 float or double numbers. There can be many instances
-  // of a point and a copy operation should be a fast as
-  // possible so this type should be space optimized so
-  // that only the required amount of memory is needed
-  // to represent a specific kind of point.
+  // Floating point type.
   
-  template<typename S, typename K, typename P>
-  class GvmListKeyer : public GvmSimpleKeyer<S,K,P> {
+  template<typename S, typename V, typename K, typename FP>
+  class GvmListKeyer : public GvmSimpleKeyer<S,V,K,FP> {
   public:
     
-    GvmListKeyer<S,K,P>()
+    GvmListKeyer<S,V,K,FP>()
     {
     }
     

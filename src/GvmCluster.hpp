@@ -14,35 +14,34 @@
 #import "GvmCommon.hpp"
 
 namespace Gvm {
-
   // S
+  //
+  // Cluster vector space.
+  
+  // V
+  //
+  // Cluster vector type.
   
   // K
   //
-  // Type of key
+  // Type of key.
   
-  // P
+  // FP
   //
-  // Point type. For example a 2D set of points could be
-  // represented by a type that was large enough to support
-  // 2 float or double numbers. There can be many instances
-  // of a point and a copy operation should be a fast as
-  // possible so this type should be space optimized so
-  // that only the required amount of memory is needed
-  // to represent a specific kind of point.
+  // Floating point type.
   
-  template<typename S, typename K, typename P>
+  template<typename S, typename V, typename K, typename FP>
   class GvmCluster {
   public:
     
     // The set of clusters to which this cluster belongs
     
-    GvmClusters<S,K,P> &clusters;
+    GvmClusters<S,V,K,FP> &clusters;
     
     // The pairings of this cluster with all other clusters.
     // Note that this is a vector of pointers to cluster pairs.
     
-    std::vector<std::shared_ptr<GvmClusterPair<S,K,P>> > pairs;
+    std::vector<std::shared_ptr<GvmClusterPair<S,V,K,FP>> > pairs;
     
     // Whether this cluster is in the process of being removed.
     
@@ -54,19 +53,19 @@ namespace Gvm {
     
     // The total mass of this cluster.
     
-    P m0;
+    FP m0;
     
     // The mass-weighted coordinate sum.
     
-    std::vector<P> m1;
+    V m1;
 
     // The mass-weighted coordinate-square sum.
 
-    std::vector<P> m2;
+    V m2;
 
     // The computed variance of this cluster.
     
-    P var;
+    FP var;
 
     // The key associated with this cluster (can be nullptr).
     // Note that this ref is not a unique_ptr
@@ -77,12 +76,12 @@ namespace Gvm {
     
     // constructor
     
-    GvmCluster<S,K,P>(GvmClusters<S,K,P> &inClusters)
+    GvmCluster<S,V,K,FP>(GvmClusters<S,V,K,FP> &inClusters)
     : clusters(inClusters), removed(false), m0(0.0), var(0.0), key(nullptr)
     {
       removed = false;
       count = 0;
-      m0 = P(0.0);
+      m0 = FP(0.0);
       m1 = clusters.space.newOrigin();
       m2 = clusters.space.newOrigin();
       
@@ -105,7 +104,7 @@ namespace Gvm {
     
     // The total mass of the cluster.
     
-    P getMass() {
+    FP getMass() {
       return m0;
     }
     
@@ -117,7 +116,7 @@ namespace Gvm {
     
     // The computed variance of the cluster
     
-    P getVariance() {
+    FP getVariance() {
       return var;
     }
     
@@ -134,10 +133,10 @@ namespace Gvm {
     
     void clear() {
       count = 0;
-      m0 = P(0.0);
+      m0 = FP(0.0);
       clusters.space.setToOrigin(m1);
       clusters.space.setToOrigin(m2);
-      var = P(0.0);
+      var = FP(0.0);
       key = nullptr;
     }
     
@@ -145,8 +144,8 @@ namespace Gvm {
     // m : the mass of the point
     // pt : the coordinates of the point
     
-    void set(P m, std::vector<P> &pt) {
-      if (m == P(0.0)) {
+    void set(FP m, V &pt) {
+      if (m == FP(0.0)) {
         if (count != 0) {
           clusters.space.setToOrigin(m1);
           clusters.space.setToOrigin(m2);
@@ -157,7 +156,7 @@ namespace Gvm {
       }
       count = 1;
       m0 = m;
-      var = P(0.0);
+      var = FP(0.0);
     }
 
     // Adds a point to the cluster.
@@ -165,13 +164,13 @@ namespace Gvm {
     // m : the mass of the point
     // pt : the coordinates of the point
     
-    void add(P m, std::vector<P> &pt) {
+    void add(FP m, V &pt) {
       if (count == 0) {
         set(m, pt);
       } else {
         count += 1;
         
-        if (m != P(0.0)) {
+        if (m != FP(0.0)) {
           m0 += m;
           clusters.space.addScaled(m1, m, pt);
           clusters.space.addScaledSqr(m2, m, pt);
@@ -184,7 +183,7 @@ namespace Gvm {
     //
     // cluster : a cluster, not this or null
     
-    void set(GvmCluster<S,K,P> &cluster) {
+    void set(GvmCluster<S,V,K,FP> &cluster) {
       if (&cluster == this) {
         assert(0);
       }
@@ -199,7 +198,7 @@ namespace Gvm {
     //
     // cluster : the cluster to be added
     
-    void add(GvmCluster<S,K,P> &cluster) {
+    void add(GvmCluster<S,V,K,FP> &cluster) {
       if (&cluster == this) {
         assert(0);
       }
@@ -223,8 +222,8 @@ namespace Gvm {
     // pt the coordinates of the point
     // return the variance of this cluster inclusive of the point
     
-    P test(P m, std::vector<P> &pt) {
-      return m0 == P(0.0) && m == P(0.0) ? P(0.0) : clusters.space.variance(m0, m1, m2, m, pt) - var;
+    FP test(FP m, V &pt) {
+      return m0 == FP(0.0) && m == FP(0.0) ? FP(0.0) : clusters.space.variance(m0, m1, m2, m, pt) - var;
     }
     
     // Computes the variance of a cluster that aggregated this cluster with the
@@ -236,14 +235,14 @@ namespace Gvm {
     
     //TODO: change for consistency with other test method : return increase in variance
     
-    P test(GvmCluster<S,K,P> &cluster) {
-      return m0 == P(0.0) && cluster.m0 == P(0.0) ? P(0.0) : clusters.space.variance(m0, m1, m2, cluster.m0, cluster.m1, cluster.m2);
+    FP test(GvmCluster<S,V,K,FP> &cluster) {
+      return m0 == FP(0.0) && cluster.m0 == FP(0.0) ? FP(0.0) : clusters.space.variance(m0, m1, m2, cluster.m0, cluster.m1, cluster.m2);
     }
     
     // Recompute this cluster's variance.
     
     void update() {
-      var = m0 == P(0.0) ? P(0.0) : clusters.space.variance(m0, m1, m2);
+      var = m0 == FP(0.0) ? FP(0.0) : clusters.space.variance(m0, m1, m2);
     }
     
   }; // end class GvmCluster

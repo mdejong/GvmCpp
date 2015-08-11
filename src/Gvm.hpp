@@ -18,6 +18,7 @@
 #import "GvmSimpleKeyer.hpp"
 #import "GvmListKeyer.hpp"
 
+#import "GvmStdVector.hpp"
 #import "GvmVectorSpace.hpp"
 
 #import "GvmCluster.hpp"
@@ -26,3 +27,4 @@
 #import "GvmClusterPairs.hpp"
 
 #import "GvmResult.hpp"
+

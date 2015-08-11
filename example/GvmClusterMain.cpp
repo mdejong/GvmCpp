@@ -22,10 +22,10 @@ using namespace Gvm;
 
 // Load points from a file
 
-template<typename P>
-vector<vector<P> > loadPointsFromBGR(string filename)
+template<typename V, typename P>
+vector<V> loadPointsFromBGR(string filename)
 {
-  vector<vector<P> > allPoints;
+  vector<V> allPoints;
   
   FILE *fp = fopen(filename.c_str(), "rb");
   
@@ -77,13 +77,13 @@ vector<vector<P> > loadPointsFromBGR(string filename)
     P y = G;
     P z = R;
     
-    vector<P> coords;
+    V coordsVec;
     
-    coords.push_back(x);
-    coords.push_back(y);
-    coords.push_back(z);
+    coordsVec[0] = x;
+    coordsVec[1] = y;
+    coordsVec[2] = z;
     
-    allPoints.push_back(coords);
+    allPoints.push_back(coordsVec);
   }
   
   fclose(fp);
@@ -95,24 +95,30 @@ int main(int argc, char **argv) {
   
   string filename = "/Users/modejong/Development/ImageCompression/GVMCluster/Lenna_int_order.yuv";
 
-  typedef double P;
-//    typedef float P;
+  typedef double FP;
+//    typedef float FP;
   
-  typedef vector<vector<P> > ClusterKey;
+  // ClusterVector and ClusterVspace define the low level fixed size
+  // vector of values that represents the point values.
   
-  typedef GvmVectorSpace<P,3> ClusterVspace;
+  typedef GvmStdVector<FP,3> ClusterVector;
+  typedef GvmVectorSpace<ClusterVector,FP,3> ClusterVectorSpace;
+
+  // A "key" is a vector of points in one specific cluster.
   
-  vector<vector<P> > allPoints = loadPointsFromBGR<P>(filename);
+  typedef vector<ClusterVector> ClusterKey;
+  
+  vector<ClusterVector> allPoints = loadPointsFromBGR<ClusterVector,FP>(filename);
 
   cout << "read " << allPoints.size() << " pixels from " << filename << endl;
   
-  ClusterVspace vspace;
+  ClusterVectorSpace vspace;
   
   const int numClusters = 2048;
   
-  GvmClusters<ClusterVspace, ClusterKey, P> clusters(vspace, numClusters);
+  GvmClusters<ClusterVectorSpace, ClusterVector, ClusterKey, FP> clusters(vspace, numClusters);
   
-  GvmListKeyer<ClusterVspace, ClusterKey, P> listKeyer;
+  GvmListKeyer<ClusterVectorSpace, ClusterVector, ClusterKey, FP> listKeyer;
   
   // Install key combiner for list of points, caller must manage ptr lifetime
   
@@ -126,10 +132,10 @@ int main(int argc, char **argv) {
   vector<ClusterKey> allKeys;
   allKeys.reserve(allPoints.size());
   
-  for ( vector<P> & pt : allPoints ) {
+  for ( ClusterVector & pt : allPoints ) {
     // Key is a list of (list of points)
     if (false) {
-    assert(pt.size() == 3);
+    assert(pt.getDimensions() == 3);
     cout << "clustering point (B G R) (" << pt[0] << " " << pt[1] << " " << pt[2] << ")" << endl;
     }
     
@@ -148,7 +154,7 @@ int main(int argc, char **argv) {
   
   int clusteri = 0;
   
-  vector<GvmResult<ClusterVspace, ClusterKey, P>> results = clusters.results();
+  vector<GvmResult<ClusterVectorSpace, ClusterVector, ClusterKey, FP>> results = clusters.results();
   
   for ( auto & result : results ) {
     cout << "cluster[" << clusteri << "]: " << result.toString() << endl;
@@ -172,10 +178,10 @@ int main(int argc, char **argv) {
     
     int pixelsWritten = 0;
     
-    for ( vector<P> &coord : *allKeys ) {
-      P x = coord[0];
-      P y = coord[1];
-      P z = coord[2];
+    for ( ClusterVector &pt : *allKeys ) {
+      FP x = pt[0];
+      FP y = pt[1];
+      FP z = pt[2];
       
       if (x < 0 || x > 255) {
         assert(0);

@@ -22,22 +22,22 @@
 
 namespace Gvm {
   // S
+  //
+  // Cluster vector space.
+  
+  // V
+  //
+  // Cluster vector type.
   
   // K
   //
-  // Type of key
+  // Type of key.
   
-  // P
+  // FP
   //
-  // Point type. For example a 2D set of points could be
-  // represented by a type that was large enough to support
-  // 2 float or double numbers. There can be many instances
-  // of a point and a copy operation should be a fast as
-  // possible so this type should be space optimized so
-  // that only the required amount of memory is needed
-  // to represent a specific kind of point.
+  // Floating point type.
   
-  template<typename S, typename K, typename P>
+  template<typename S, typename V, typename K, typename FP>
   class GvmClusters {
   public:
     
@@ -48,8 +48,8 @@ namespace Gvm {
     // var : a variance
     // return the variance clamped at zero
     
-    static inline P correct(P var) {
-      return var >= P(0.0) ? var : P(0.0);
+    static inline FP correct(FP var) {
+      return var >= FP(0.0) ? var : FP(0.0);
     }
     
     // The greatest number of clusters that will be recorded
@@ -67,21 +67,21 @@ namespace Gvm {
     // used unless setKeyer() is invoked to make
     // this cluster use a custom keyer.
     
-    std::unique_ptr<GvmDefaultKeyer<S,K,P> > defaultKeyerPtr;
+    std::unique_ptr<GvmDefaultKeyer<S,V,K,FP> > defaultKeyerPtr;
     
     // The user can pass a custom keyer object to use
     // instead of the default keyer. The caller must
     // take care to manage the lifetime of the pointer.
 
-    GvmKeyer<S,K,P> *keyerPtr;
+    GvmKeyer<S,V,K,FP> *keyerPtr;
     
     // The clusters objects.
 
-    std::vector<std::shared_ptr<GvmCluster<S,K,P>> > clusters;
+    std::vector<std::shared_ptr<GvmCluster<S,V,K,FP>> > clusters;
     
     // All possible cluster pairs.
     
-    GvmClusterPairs<S,K,P> pairs;
+    GvmClusterPairs<S,V,K,FP> pairs;
     
     // The number of points that have been added.
     
@@ -97,11 +97,11 @@ namespace Gvm {
     
     // constructor
     
-    GvmClusters<S,K,P>(S inSpace, int inCapacity)
+    GvmClusters<S,V,K,FP>(S inSpace, int inCapacity)
     :
     space(inSpace),
     capacity(inCapacity),
-    defaultKeyerPtr(new GvmDefaultKeyer<S,K,P>()),
+    defaultKeyerPtr(new GvmDefaultKeyer<S,V,K,FP>()),
     keyerPtr(nullptr),
     pairs(capacity * (capacity-1) / 2),
     additions(0),
@@ -117,7 +117,7 @@ namespace Gvm {
     
     // The keyer used to assign keys to clusters.
     
-    GvmKeyer<S,K,P>* getKeyer() {
+    GvmKeyer<S,V,K,FP>* getKeyer() {
       if (keyerPtr) {
         return keyerPtr;
       } else {
@@ -128,7 +128,7 @@ namespace Gvm {
     // Setter for keyer property, use this method to define a new keyer instead of
     // using GvmDefaultKeyer. Note that nullptr cannot be passed to this method.
     
-    void setKeyer(GvmKeyer<S,K,P> *inKeyer) {
+    void setKeyer(GvmKeyer<S,V,K,FP> *inKeyer) {
       keyerPtr = inKeyer;
       if (keyerPtr) {
       } else {
@@ -172,17 +172,17 @@ namespace Gvm {
     // or a shared_ptr, the lifetime of this
     // pointer must be managed by the caller.
     
-    void add(P m, std::vector<P> &pt, K* key) {
-      if (m == P(0.0)) return; //nothing to do
+    void add(FP m, V &pt, K* key) {
+      if (m == FP(0.0)) return; //nothing to do
       if (count < capacity) { //shortcut
         //TODO should prefer add if var comes to zero
         
-        auto newClusterPtr = std::make_shared<GvmCluster<S,K,P> >(*this);
+        auto newClusterPtr = std::make_shared<GvmCluster<S,V,K,FP> >(*this);
 #if defined(DEBUG)
         assert(clusters[additions] == nullptr);
 #endif // DEBUG
         clusters[additions] = newClusterPtr;
-        GvmCluster<S,K,P> &cluster = *(newClusterPtr.get());
+        GvmCluster<S,V,K,FP> &cluster = *(newClusterPtr.get());
         cluster.set(m, pt);
         addPairs();
         cluster.key = getKeyer()->addKey(cluster, key);
@@ -190,15 +190,15 @@ namespace Gvm {
         bound = count;
       } else {
         //identify cheapest merge
-        GvmClusterPair<S,K,P> *mergePairPtr = pairs.peek();
-        P mergeT = mergePairPtr == nullptr ? std::numeric_limits<P>::max() : mergePairPtr->value;
+        GvmClusterPair<S,V,K,FP> *mergePairPtr = pairs.peek();
+        FP mergeT = mergePairPtr == nullptr ? std::numeric_limits<FP>::max() : mergePairPtr->value;
         //find cheapest addition
-        GvmCluster<S,K,P> *additionCPtr = nullptr;
-        P additionT = std::numeric_limits<P>::max();
+        GvmCluster<S,V,K,FP> *additionCPtr = nullptr;
+        FP additionT = std::numeric_limits<FP>::max();
         for (int i = 0; i < clusters.size(); i++) {
           auto &clusterSharedPtr = clusters[i];
-          GvmCluster<S,K,P> *clusterPtr = clusterSharedPtr.get();
-          P t = clusterPtr->test(m, pt);
+          GvmCluster<S,V,K,FP> *clusterPtr = clusterSharedPtr.get();
+          FP t = clusterPtr->test(m, pt);
           if (t < additionT) {
             additionCPtr = clusterPtr;
             additionT = t;
@@ -206,15 +206,15 @@ namespace Gvm {
         }
         if (additionT <= mergeT) {
           //choose addition
-          GvmCluster<S,K,P> &additionC = *additionCPtr;
+          GvmCluster<S,V,K,FP> &additionC = *additionCPtr;
           additionC.add(m, pt);
           updatePairs(additionC);
           additionC.key = getKeyer()->addKey(additionC, key);
         } else {
           //choose merge
-          GvmClusterPair<S,K,P> &mergePair = *mergePairPtr;
-          GvmCluster<S,K,P> *c1 = &mergePair.c1;
-          GvmCluster<S,K,P> *c2 = &mergePair.c2;
+          GvmClusterPair<S,V,K,FP> &mergePair = *mergePairPtr;
+          GvmCluster<S,V,K,FP> *c1 = &mergePair.c1;
+          GvmCluster<S,V,K,FP> *c2 = &mergePair.c2;
           if (c1->m0 < c2->m0) {
             c1 = c2;
             c2 = &mergePair.c1;
@@ -243,15 +243,15 @@ namespace Gvm {
     // minClusters : a lower bound on the the number of clusters that may not be
     // exceeded by merging clusters
     
-    void reduce(P maxVar, int minClusters) {
+    void reduce(FP maxVar, int minClusters) {
       assert(minClusters >= 0);
       if (count <= minClusters) return; //nothing to do
       
-      P totalVar = P(0.0);
-      P totalMass = P(0.0);
+      FP totalVar = FP(0.0);
+      FP totalMass = FP(0.0);
       for (int i = 0; i < count; i++) {
         auto &clusterSharedPtr = clusters[i];
-        GvmCluster<S,K,P> &cluster = *(clusterSharedPtr.get());
+        GvmCluster<S,V,K,FP> &cluster = *(clusterSharedPtr.get());
         totalVar += cluster.var;
         totalMass += cluster.m0;
       }
@@ -261,24 +261,24 @@ namespace Gvm {
           //remove the last cluster
           for (int i = 0; i < bound; i++) {
             auto &clusterSharedPtr = clusters[i];
-            GvmCluster<S,K,P> &c = *(clusterSharedPtr.get());
+            GvmCluster<S,V,K,FP> &c = *(clusterSharedPtr.get());
             if (!c.removed) {
               c.removed = true;
               break;
             }
           }
         } else {
-          GvmClusterPair<S,K,P> *mergePair = pairs.peek();
+          GvmClusterPair<S,V,K,FP> *mergePair = pairs.peek();
           assert(mergePair);
-          GvmCluster<S,K,P> *c1 = &mergePair->c1;
-          GvmCluster<S,K,P> *c2 = &mergePair->c2;
+          GvmCluster<S,V,K,FP> *c1 = &mergePair->c1;
+          GvmCluster<S,V,K,FP> *c2 = &mergePair->c2;
           
           if (c1->m0 < c2->m0) {
             c1 = c2;
             c2 = &mergePair->c1;
           }
-          if (maxVar >= P(0.0)) {
-            P diff = c1->test(*c2) - c1->var - c2->var;
+          if (maxVar >= FP(0.0)) {
+            FP diff = c1->test(*c2) - c1->var - c2->var;
             totalVar += diff;
             if (totalVar/totalMass > maxVar) break; //stop here, we are going to exceed maximum
           }
@@ -295,7 +295,7 @@ namespace Gvm {
         int j = 0;
         for (int i = 0; i < bound;) {
           auto &clusterSharedPtr = clusters[i];
-          GvmCluster<S,K,P> &cluster = *(clusterSharedPtr.get());
+          GvmCluster<S,V,K,FP> &cluster = *(clusterSharedPtr.get());
           bool lose = cluster.removed;
           if (lose) {
             i++;
@@ -342,13 +342,13 @@ namespace Gvm {
     //
     // return the result of clustering the points thus far added
     
-    std::vector<GvmResult<S,K,P>> results() {
-      std::vector<GvmResult<S,K,P>> list;
+    std::vector<GvmResult<S,V,K,FP>> results() {
+      std::vector<GvmResult<S,V,K,FP>> list;
       for (int i = 0; i < count; i++) {
         auto &clusterSharedPtr = clusters[i];
         auto &cluster = *(clusterSharedPtr.get());
         //TODO exclude massless clusters?
-        list.push_back(GvmResult<S,K,P>(cluster));
+        list.push_back(GvmResult<S,V,K,FP>(cluster));
       }
       return list;
     }
@@ -359,10 +359,10 @@ namespace Gvm {
     //assumes last cluster is the one to add pairs for
     //assumes pairs are contiguous
     void addPairs() {
-      GvmCluster<S,K,P> &cj = *(clusters[count].get());
+      GvmCluster<S,V,K,FP> &cj = *(clusters[count].get());
       int c = count - 1; //index at which new pairs registered for existing clusters
       for (int i = 0; i < count; i++) {
-        GvmCluster<S,K,P> &ci = *(clusters[i].get());
+        GvmCluster<S,V,K,FP> &ci = *(clusters[i].get());
         auto pair = pairs.newSharedPair(ci, cj);
         ci.pairs[c] = pair;
         cj.pairs[i] = pair;
@@ -371,7 +371,7 @@ namespace Gvm {
     }
 
     //does not assume pairs are contiguous
-    void updatePairs(GvmCluster<S,K,P> & cluster) {
+    void updatePairs(GvmCluster<S,V,K,FP> & cluster) {
       auto &pairs = cluster.pairs;
       //accelerated path
       if (count == bound) {
@@ -392,7 +392,7 @@ namespace Gvm {
     //does not assume pairs are contiguous
     //leaves pairs in cluster pair lists
     //these are tidied when everything is made contiguous again
-    void removePairs(GvmCluster<S,K,P> & cluster) {
+    void removePairs(GvmCluster<S,V,K,FP> & cluster) {
       auto &pairs = cluster.pairs;
       for (int i = 0; i < bound-1; i++) {
         auto &pair = pairs[i];

@@ -16,22 +16,22 @@
 namespace Gvm {
 
   // S
+  //
+  // Cluster vector space.
+  
+  // V
+  //
+  // Cluster vector type.
   
   // K
   //
-  // Type of key
+  // Type of key.
   
-  // P
+  // FP
   //
-  // Point type. For example a 2D set of points could be
-  // represented by a type that was large enough to support
-  // 2 float or double numbers. There can be many instances
-  // of a point and a copy operation should be a fast as
-  // possible so this type should be space optimized so
-  // that only the required amount of memory is needed
-  // to represent a specific kind of point.
+  // Floating point type.
   
-  template<typename S, typename K, typename P>
+  template<typename S, typename V, typename K, typename FP>
   class GvmResult {
   public:
     
@@ -41,7 +41,7 @@ namespace Gvm {
 
     // The aggregate mass of the cluster.
     
-    P mass;
+    FP mass;
     
     // Defines the points that will be clusters
     
@@ -49,15 +49,15 @@ namespace Gvm {
 
     // The coordinates of the cluster's centroid.
     
-    std::vector<P> point;
+    V point;
 
     // The variance of the cluster.
 
-    P variance;
+    FP variance;
     
     // The standard deviation of the cluster.
     
-    P stdDeviation;
+    FP stdDeviation;
     
     // The key associated with the cluster.
     
@@ -65,17 +65,17 @@ namespace Gvm {
 
     // constructor
     
-    GvmResult(GvmCluster<S,K,P> cluster)
+    GvmResult(GvmCluster<S,V,K,FP> cluster)
     : space(cluster.clusters.space)
     {
       count = cluster.count;
       mass = cluster.m0;
       variance = cluster.var / mass;
-      stdDeviation = P(-1.0);
+      stdDeviation = FP(-1.0);
       key = cluster.key;
       //space = cluster.clusters.space;
       point = space.newCopy(cluster.m1);
-      space.scale(point, P(1.0) / mass);
+      space.scale(point, FP(1.0) / mass);
     }
     
     // getters
@@ -92,58 +92,58 @@ namespace Gvm {
     
     // The aggregate mass of the cluster.
     
-    P getMass() {
+    FP getMass() {
       return mass;
     }
     
     // Sets the aggregate mass of the cluster.
     
-    void setMass(P inMass) {
+    void setMass(FP inMass) {
       mass = inMass;
     }
     
-    GvmSpace<P>* getSpace() {
+    S* getSpace() {
       return space;
     }
     
-    void setSpace(GvmSpace<P>* inSpace) {
+    void setSpace(S* inSpace) {
       space = inSpace;
     }
     
     // The coordinates of the cluster's centroid. The returned array should not
     // be modified.
     
-    std::vector<P> getPoint() {
+    V getPoint() {
       return point;
     }
     
     // Sets the coordinates of the cluster's centroid. The values of the
     // supplied point are copied.
     
-    void setPoint(std::vector<P> &inPoint) {
+    void setPoint(V &inPoint) {
       point = inPoint;
     }
 
     // The variance of the cluster.
     
-    P getVariance() {
+    FP getVariance() {
       return variance;
     }
     
     // The standard deviation of the cluster.
     
-    P getStdDeviation() {
-      return stdDeviation < P(0.0) ? stdDeviation = sqrt(variance) : stdDeviation;
+    FP getStdDeviation() {
+      return stdDeviation < FP(0.0) ? stdDeviation = sqrt(variance) : stdDeviation;
     }
     
     // Sets the variance of the cluster.
     
-    void setVariance(P inVariance) {
-      if (inVariance < P(0.0)) {
+    void setVariance(FP inVariance) {
+      if (inVariance < FP(0.0)) {
         assert(0); // negative variance
       }
       variance = inVariance;
-      stdDeviation = P(-1.0);
+      stdDeviation = FP(-1.0);
     }
     
     // The key associated with the cluster, may be nullptr.

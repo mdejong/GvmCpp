@@ -20,23 +20,22 @@
 namespace Gvm {
 
   // S
-  // Specific subclass that implements GvmSpace
+  //
+  // Cluster vector space.
+  
+  // V
+  //
+  // Cluster vector type.
   
   // K
   //
-  // Type of key
+  // Type of key.
   
-  // P
+  // FP
   //
-  // Point type. For example a 2D set of points could be
-  // represented by a type that was large enough to support
-  // 2 float or double numbers. There can be many instances
-  // of a point and a copy operation should be a fast as
-  // possible so this type should be space optimized so
-  // that only the required amount of memory is needed
-  // to represent a specific kind of point.
+  // Floating point type.
   
-  template<typename S, typename K, typename P>
+  template<typename S, typename V, typename K, typename FP>
   class GvmClusterPairs {
   public:
 
@@ -66,11 +65,11 @@ namespace Gvm {
     // to copy the object data. The shared refs means that
     // GvmClusters can also hold refs to these same pair objects.
     
-    std::vector<std::shared_ptr<GvmClusterPair<S,K,P>> > pairs;
+    std::vector<std::shared_ptr<GvmClusterPair<S,V,K,FP>> > pairs;
     
     int size;
         
-    GvmClusterPairs<S,K,P>(int initialCapacity)
+    GvmClusterPairs<S,V,K,FP>(int initialCapacity)
     : size(0)
     {
       pairs.reserve(initialCapacity);
@@ -82,12 +81,12 @@ namespace Gvm {
     
     // Copy constructor
     
-    GvmClusterPairs<S,K,P>(GvmClusterPairs<S,K,P> &that) {
+    GvmClusterPairs<S,V,K,FP>(GvmClusterPairs<S,V,K,FP> &that) {
       pairs = that.pairs;
       size = pairs.length;
     }
     
-    bool add(std::shared_ptr<GvmClusterPair<S,K,P> > &pair) {
+    bool add(std::shared_ptr<GvmClusterPair<S,V,K,FP> > &pair) {
       int i = size;
       if (i >= pairs.size()) {
         grow(i + 1);
@@ -104,31 +103,31 @@ namespace Gvm {
     
     // add cluster pair and return ref to shared pair object that was just added
     
-    std::shared_ptr<GvmClusterPair<S,K,P>>
-    newSharedPair(GvmCluster<S,K,P> &c1, GvmCluster<S,K,P> &c2) {
-      auto newPairPtr = std::make_shared<GvmClusterPair<S,K,P> >(c1, c2);
+    std::shared_ptr<GvmClusterPair<S,V,K,FP>>
+    newSharedPair(GvmCluster<S,V,K,FP> &c1, GvmCluster<S,V,K,FP> &c2) {
+      auto newPairPtr = std::make_shared<GvmClusterPair<S,V,K,FP> >(c1, c2);
       return newPairPtr;
     }
 
-    GvmClusterPair<S,K,P>* peek() {
+    GvmClusterPair<S,V,K,FP>* peek() {
       return size == 0 ? nullptr : pairs[0].get();
     }
     
-    bool remove(std::shared_ptr<GvmClusterPair<S,K,P> > &pair) {
+    bool remove(std::shared_ptr<GvmClusterPair<S,V,K,FP> > &pair) {
       int i = indexOf(pair);
       if (i == -1) return false;
       removeAt(i);
       return true;
     }
     
-    void reprioritize(std::shared_ptr<GvmClusterPair<S,K,P> > &pair) {
-      GvmClusterPair<S,K,P> &pairObj = *(pair.get());
+    void reprioritize(std::shared_ptr<GvmClusterPair<S,V,K,FP> > &pair) {
+      GvmClusterPair<S,V,K,FP> &pairObj = *(pair.get());
       int i = indexOf(pair);
       if (i == -1) {
         assert(0);
       }
       pairObj.update();
-      std::shared_ptr<GvmClusterPair<S,K,P> > *parent = (i == 0) ? nullptr : &pairs[ ushift_right(i - 1) ];
+      std::shared_ptr<GvmClusterPair<S,V,K,FP> > *parent = (i == 0) ? nullptr : &pairs[ ushift_right(i - 1) ];
       if (parent != nullptr && parent->get()->value > pairObj.value) {
         heapifyUp(i, pair);
       } else {
@@ -142,7 +141,7 @@ namespace Gvm {
     
     void clear() {
       for (int i = 0; i < size; i++) {
-        GvmClusterPair<S,K,P> &e = pairs[i];
+        GvmClusterPair<S,V,K,FP> &e = pairs[i];
         e.index = -1;
         //pairs[i] = e;
       }
@@ -161,7 +160,7 @@ namespace Gvm {
       pairs.reserve(newCapacity);
     }
     
-    int indexOf(std::shared_ptr<GvmClusterPair<S,K,P> > &pair) {
+    int indexOf(std::shared_ptr<GvmClusterPair<S,V,K,FP> > &pair) {
       return pair == nullptr ? -1 : pair->index;
     }
     
@@ -173,7 +172,7 @@ namespace Gvm {
         pairs[i] = nullptr;
       } else {
         // Move pair object from one array slot to another
-        std::shared_ptr<GvmClusterPair<S,K,P> > moved = pairs[s];
+        std::shared_ptr<GvmClusterPair<S,V,K,FP> > moved = pairs[s];
         pairs[s] = nullptr;
         moved.get()->index = -1;
         heapifyDown(i, moved);
@@ -187,11 +186,11 @@ namespace Gvm {
       return;
     }
     
-    void heapifyUp(int k, std::shared_ptr<GvmClusterPair<S,K,P> > &pair) {
+    void heapifyUp(int k, std::shared_ptr<GvmClusterPair<S,V,K,FP> > &pair) {
       auto pairValue = pair.get()->value;
       while (k > 0) {
         int parent = ushift_right(k - 1);
-        std::shared_ptr<GvmClusterPair<S,K,P> > &e = pairs[parent];
+        std::shared_ptr<GvmClusterPair<S,V,K,FP> > &e = pairs[parent];
         if (pairValue >= e.get()->value) break;
         pairs[k] = e;
         e.get()->index = k;
@@ -201,12 +200,12 @@ namespace Gvm {
       pair.get()->index = k;
     }
     
-    void heapifyDown(int k, std::shared_ptr<GvmClusterPair<S,K,P> > &pair) {
+    void heapifyDown(int k, std::shared_ptr<GvmClusterPair<S,V,K,FP> > &pair) {
       auto pairValue = pair.get()->value;
       int half = ushift_right(size);
       while (k < half) {
         int child = ushift_left(k) + 1;
-        std::shared_ptr<GvmClusterPair<S,K,P> > *c = &pairs[child];
+        std::shared_ptr<GvmClusterPair<S,V,K,FP> > *c = &pairs[child];
         int right = child + 1;
         if (right < size && c->get()->value > pairs[right].get()->value) {
           child = right;

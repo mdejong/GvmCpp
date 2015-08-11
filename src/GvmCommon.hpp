@@ -18,11 +18,16 @@
 #import <assert.h>
 
 namespace Gvm {
-  template<typename S, typename K, typename P> class GvmCluster;
-  template<typename S, typename K, typename P> class GvmClusters;
-  template<typename S, typename K, typename P> class GvmClusterPair;
-  template<typename S, typename K, typename P> class GvmClusterPairs;
-  template<typename S, typename K, typename P> class GvmKeyer;
-  template<typename S, typename K, typename P> class GvmDefaultKeyer;
-  template<typename S, typename K, typename P> class GvmResult;
+  template<typename S, typename V, typename K, typename FP> class GvmCluster;
+  template<typename S, typename V, typename K, typename FP> class GvmClusters;
+  
+  template<typename S, typename V, typename K, typename FP> class GvmClusterPair;
+  template<typename S, typename V, typename K, typename FP> class GvmClusterPairs;
+  
+  template<typename S, typename V, typename K, typename FP> class GvmKeyer;
+  template<typename S, typename V, typename K, typename FP> class GvmDefaultKeyer;
+  
+  template<typename S, typename V, typename K, typename FP> class GvmResult;
+  
+  template<typename V, typename FP, int D> class GvmVectorSpace;
 }

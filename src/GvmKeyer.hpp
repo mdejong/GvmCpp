@@ -26,22 +26,22 @@
 
 namespace Gvm {
   // S
+  //
+  // Cluster vector space.
+  
+  // V
+  //
+  // Cluster vector type.
   
   // K
   //
-  // Type of key
+  // Type of key.
   
-  // P
+  // FP
   //
-  // Point type. For example a 2D set of points could be
-  // represented by a type that was large enough to support
-  // 2 float or double numbers. There can be many instances
-  // of a point and a copy operation should be a fast as
-  // possible so this type should be space optimized so
-  // that only the required amount of memory is needed
-  // to represent a specific kind of point.
+  // Floating point type.
   
-  template<typename S, typename K, typename P>
+  template<typename S, typename V, typename K, typename FP>
   class GvmKeyer {
   public:
     
@@ -52,7 +52,7 @@ namespace Gvm {
     // c2 : the cluster with the lesser mass
     // return a key for the cluster that combines those of c1 and c2, may be nullptr
     
-    virtual K* mergeKeys(GvmCluster<S,K,P> &c1, GvmCluster<S,K,P> &c2) = 0;
+    virtual K* mergeKeys(GvmCluster<S,V,K,FP> &c1, GvmCluster<S,V,K,FP> &c2) = 0;
     
     // Called when a key is being added to a cluster.
     //
@@ -60,7 +60,7 @@ namespace Gvm {
     // key : the key for a newly clustered coordinate
     // return the key to be assigned to the new cluster, may be nullptr
 
-    virtual K* addKey(GvmCluster<S,K,P> &cluster, K* key) = 0;
+    virtual K* addKey(GvmCluster<S,V,K,FP> &cluster, K* key) = 0;
     
   }; // end class GvmKeyer
 
