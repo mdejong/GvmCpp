@@ -37,7 +37,7 @@ namespace Gvm {
   class GvmStdVector {
   public:
     
-    // Statically defined array of values
+    // Statically sized array of values
     
     FP values[D];
     
@@ -65,30 +65,6 @@ namespace Gvm {
         values[i] = other.values[i];
       }
     }
-    
-    /*
-    
-    // copy assignment
-    
-    GvmStdVector<FP,D>& operator=(const GvmStdVector<FP,D>& other)
-    {
-      for (int i = 0; i < D; i++) {
-        values[i] = other.values[i];
-      }
-      return *this;
-    }
-    
-    // move assignment
-    
-    GvmStdVector<FP,D>& operator=(const GvmStdVector<FP,D>&& other)
-    {
-      for (int i = 0; i < D; i++) {
-        values[i] = other.values[i];
-      }
-      return *this;
-    }
-     
-    */
     
     FP& operator[](std::size_t idx)       {
       return values[idx];

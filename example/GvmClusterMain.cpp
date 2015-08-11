@@ -95,8 +95,10 @@ int main(int argc, char **argv) {
   
   string filename = "/Users/modejong/Development/ImageCompression/GVMCluster/Lenna_int_order.yuv";
 
+  // Using float instead of double cuts memory usage down just a bit, like 10%
+  
   typedef double FP;
-//    typedef float FP;
+//  typedef float FP;
   
   // ClusterVector and ClusterVspace define the low level fixed size
   // vector of values that represents the point values.
@@ -115,6 +117,10 @@ int main(int argc, char **argv) {
   ClusterVectorSpace vspace;
   
   const int numClusters = 2048;
+  //const int numClusters = 1024;
+  //const int numClusters = 512; // 30 megs of ram, 8 sec CPU
+  //const int numClusters = 256; // 16 megs of ram, 3 sec of CPU
+  //const int numClusters = 128; // 16 megs of ram, 1 sec of CPU
   
   GvmClusters<ClusterVectorSpace, ClusterVector, ClusterKey, FP> clusters(vspace, numClusters);
   
