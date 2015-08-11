@@ -165,7 +165,10 @@ namespace Gvm {
     }
     
     int indexOf(std::shared_ptr<GvmClusterPair<S,V,K,FP> > &pair) {
-      return pair == nullptr ? -1 : pair->index;
+#if defined(DEBUG)
+      assert(pair.get() != nullptr);
+#endif // DEBUG
+      return pair->index;
     }
     
     void removeAt(int i) {
