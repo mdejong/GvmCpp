@@ -172,7 +172,7 @@ namespace Gvm {
       return sum;
     }
 
-    P variance(P m1, std::vector<P> &pt1, std::vector<P> &ptSqr1, P m2, std::vector<P> pt2) {
+    P variance(P m1, std::vector<P> &pt1, std::vector<P> &ptSqr1, P m2, std::vector<P> &pt2) {
       const P m0 = m1 + m2;
       const P m0Mult = P(1.0) / m0;
       P sum = P(0.0);
@@ -185,7 +185,7 @@ namespace Gvm {
       return sum;
     }
 
-    P variance(P m1, std::vector<P> &pt1, std::vector<P> &ptSqr1, P m2, std::vector<P> pt2, std::vector<P> &ptSqr2) {
+    P variance(P m1, std::vector<P> &pt1, std::vector<P> &ptSqr1, P m2, std::vector<P> &pt2, std::vector<P> &ptSqr2) {
       const P m0 = m1 + m2;
       const P m0Mult = P(1.0) / m0;
       P sum = P(0.0);
