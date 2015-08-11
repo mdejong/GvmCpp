@@ -86,11 +86,25 @@ namespace Gvm {
       size = pairs.length;
     }
     
-    bool add(std::shared_ptr<GvmClusterPair<S,V,K,FP> > &pair) {
+    void add(std::shared_ptr<GvmClusterPair<S,V,K,FP> > &pair) {
       int i = size;
+      
+      // This grow() logic does not get invoked at runtime since
+      // the number of cluster pairs is defined as the largest
+      // possible size of N^2. Because the grow() logic is in
+      // the critical runtime path in add() removal of the
+      // logic provides for better inlining performance.
+
+      //if (i >= pairs.size()) {
+      //  grow(i + 1);
+      //}
+      
+#if defined(DEBUG)
       if (i >= pairs.size()) {
-        grow(i + 1);
+        assert(0);
       }
+#endif // DEBUG
+      
       size = i + 1;
       if (i == 0) {
         pairs[0] = pair;
@@ -98,7 +112,7 @@ namespace Gvm {
       } else {
         heapifyUp(i, pair);
       }
-      return true;
+      return;
     }
     
     // add cluster pair and return ref to shared pair object that was just added
