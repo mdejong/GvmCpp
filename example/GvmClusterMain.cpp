@@ -116,10 +116,10 @@ int main(int argc, char **argv) {
   
   ClusterVectorSpace vspace;
   
-  const int numClusters = 2048;
+  //const int numClusters = 2048;
   //const int numClusters = 1024;
   //const int numClusters = 512; // 30 megs of ram, 8 sec CPU
-  //const int numClusters = 256; // 16 megs of ram, 3 sec of CPU
+  const int numClusters = 256; // 16 megs of ram, 3 sec of CPU
   //const int numClusters = 128; // 16 megs of ram, 1 sec of CPU
   
   GvmClusters<ClusterVectorSpace, ClusterVector, ClusterKey, FP> clusters(vspace, numClusters);
