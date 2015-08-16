@@ -129,7 +129,7 @@ int main(int argc, char **argv) {
 
   // A "key" is a vector of points in one specific cluster.
   
-  typedef vector<ClusterVector> ClusterKey;
+  typedef vector<uint32_t> ClusterKey;
   
   vector<uint32_t> allPixels = loadPixelsFromBGR(filename);
   
@@ -172,7 +172,7 @@ int main(int argc, char **argv) {
     
     ClusterKey key;
     
-    key.push_back(pt);
+    key.push_back(pixel);
     
     clusters.add(1, pt, &key);
   }
@@ -209,27 +209,7 @@ int main(int argc, char **argv) {
     
     int pixelsWritten = 0;
     
-    for ( ClusterVector &pt : *clusterKeys ) {
-      FP x = pt[0];
-      FP y = pt[1];
-      FP z = pt[2];
-      
-      if (x < 0 || x > 255) {
-        assert(0);
-      }
-      if (y < 0 || y > 255) {
-        assert(0);
-      }
-      if (z < 0 || z > 255) {
-        assert(0);
-      }
-      
-      uint32_t B = int(x);
-      uint32_t G = int(y);
-      uint32_t R = int(z);
-      
-      uint32_t pixel = (0xFF << 24) | (R << 16) | (G << 8) | B;
-
+    for ( uint32_t pixel : *clusterKeys ) {
       int numWritten = (int)fwrite(&pixel, sizeof(uint32_t), 1, outFP);
       assert(numWritten == 1);
       pixelsWritten++;
