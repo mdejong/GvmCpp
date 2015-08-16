@@ -20,12 +20,62 @@
 using namespace std;
 using namespace Gvm;
 
-// Load points from a file
+// Given a pixel represented as a 32 bit integer convert to a vector
+// of floating points representation and store in outVec.
 
 template<typename V, typename P>
-vector<V> loadPointsFromBGR(string filename)
+static inline
+void convertPoint(int32_t pixel, V &outVec)
 {
-  vector<V> allPoints;
+  uint32_t B = pixel & 0xFF;
+  uint32_t G = (pixel >> 8) & 0xFF;
+  uint32_t R = (pixel >> 16) & 0xFF;
+  
+  P x = B;
+  P y = G;
+  P z = R;
+  
+  outVec[0] = x;
+  outVec[1] = y;
+  outVec[2] = z;
+  
+  return;
+}
+
+// Scan input values to make sure there are no duplicate pixels
+
+#if defined(DEBUG)
+
+void checkForDuplicates(vector<uint32_t> &inPixelsVec, uint32_t allowedDup)
+{
+  // In DEBUG mode, use unordered_map to check for duplicate pixels in the input.
+  // Note that BGRA pixels will be ignored since different alpha values will be
+  // treated as the same point as fully opaque. The caller must take care to
+  // implement this alpha value filtering before invoking this method.
+  
+  unordered_map<uint32_t, uint32_t> uniquePixelMap;
+  
+  for ( uint32_t pixel : inPixelsVec ) {
+    if (pixel != allowedDup && uniquePixelMap.count(pixel) > 0) {
+      fprintf(stdout, "input contains duplicate BGR pixel 0x%08X\n", pixel);
+      exit(1);
+    }
+    
+    uniquePixelMap[pixel] = 0;
+  }
+  
+  return;
+}
+
+#endif // DEBUG
+
+// Read YUV pixels in BGRA order and return in a vector of uint32_t
+
+// Load points from a file
+
+vector<uint32_t> loadPixelsFromBGR(string filename)
+{
+  vector<uint32_t> allPoints;
   
   FILE *fp = fopen(filename.c_str(), "rb");
   
@@ -45,12 +95,6 @@ vector<V> loadPointsFromBGR(string filename)
 
   fseek(fp, 0, SEEK_SET);
   
-  // In DEBUG mode, use unordered_map to check for duplicate pixels in the input
-  
-#if defined(DEBUG)
-  unordered_map<uint32_t, uint32_t> uniquePixelMap;
-#endif // DEBUG
-  
   for (; numBytes > 0 ; numBytes -= 4) {
     uint32_t pixel;
     
@@ -60,30 +104,7 @@ vector<V> loadPointsFromBGR(string filename)
       exit(1);
     }
     
-    uint32_t B = pixel & 0xFF;
-    uint32_t G = (pixel >> 8) & 0xFF;
-    uint32_t R = (pixel >> 16) & 0xFF;
-    
-#if defined(DEBUG)
-    uint32_t pixelNoAlpha = (R << 16) | (G << 8) | B;
-    
-    if (uniquePixelMap.count(pixelNoAlpha) > 0) {
-      cerr << "input contains duplicate BGR pixel" << endl;
-      exit(1);
-    }
-#endif // DEBUG
-    
-    P x = B;
-    P y = G;
-    P z = R;
-    
-    V coordsVec;
-    
-    coordsVec[0] = x;
-    coordsVec[1] = y;
-    coordsVec[2] = z;
-    
-    allPoints.push_back(coordsVec);
+    allPoints.push_back(pixel);
   }
   
   fclose(fp);
@@ -110,9 +131,13 @@ int main(int argc, char **argv) {
   
   typedef vector<ClusterVector> ClusterKey;
   
-  vector<ClusterVector> allPoints = loadPointsFromBGR<ClusterVector,FP>(filename);
+  vector<uint32_t> allPixels = loadPixelsFromBGR(filename);
+  
+#if defined(DEBUG)
+  checkForDuplicates(allPixels, 0xFF000000);
+#endif // DEBUG
 
-  cout << "read " << allPoints.size() << " pixels from " << filename << endl;
+  cout << "read " << allPixels.size() << " pixels from " << filename << endl;
   
   ClusterVectorSpace vspace;
   
@@ -133,8 +158,13 @@ int main(int argc, char **argv) {
   // Insert each point into clusters. Each point is
   // associated with a list of points called a "key".
   
-  for ( ClusterVector & pt : allPoints ) {
+  ClusterVector pt;
+  
+  for ( uint32_t pixel : allPixels ) {
     // Key is a list of (list of points)
+    
+    convertPoint<ClusterVector,FP>(pixel, pt);
+    
     if (false) {
     assert(pt.getDimensions() == 3);
     cout << "clustering point (B G R) (" << pt[0] << " " << pt[1] << " " << pt[2] << ")" << endl;
