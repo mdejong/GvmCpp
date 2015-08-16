@@ -59,7 +59,12 @@ namespace Gvm {
     
     FP stdDeviation;
     
-    // The key associated with the cluster.
+    // The key associated with the cluster. Note that
+    // this is a pointer to the memory used for the
+    // cluster for performance reasons. If a copy
+    // is needed of the key values it must be made
+    // explicitly before associted cluster objects
+    // are deallocated.
     
     K* key;
 
@@ -72,7 +77,7 @@ namespace Gvm {
       mass = cluster.m0;
       variance = cluster.var / mass;
       stdDeviation = FP(-1.0);
-      key = cluster.key;
+      key = cluster.getKey();
       //space = cluster.clusters.space;
       point = space.newCopy(cluster.m1);
       space.scale(point, FP(1.0) / mass);

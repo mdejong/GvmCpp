@@ -132,11 +132,6 @@ int main(int argc, char **argv) {
   
   // Insert each point into clusters. Each point is
   // associated with a list of points called a "key".
-  // This key object lifetime must be managed by the caller
-  // for performance reasons.
-  
-  vector<ClusterKey> allKeys;
-  allKeys.reserve(allPoints.size());
   
   for ( ClusterVector & pt : allPoints ) {
     // Key is a list of (list of points)
@@ -145,11 +140,11 @@ int main(int argc, char **argv) {
     cout << "clustering point (B G R) (" << pt[0] << " " << pt[1] << " " << pt[2] << ")" << endl;
     }
     
-    allKeys.push_back(ClusterKey ());
-    ClusterKey *key = &allKeys[allKeys.size() - 1];
-    key->push_back(pt);
+    ClusterKey key;
     
-    clusters.add(1, pt, key);
+    key.push_back(pt);
+    
+    clusters.add(1, pt, &key);
   }
   
   cout << "generated " << clusters.clusters.size() << " clusters" << endl;
@@ -178,13 +173,13 @@ int main(int argc, char **argv) {
   for (int i = 0; i < results.size(); i++) {
     int clusterID = i; // keep to byte range
     
-    ClusterKey *allKeys = results[i].getKey();
+    ClusterKey *clusterKeys = results[i].getKey();
     
-    cout << "cluster " << clusterID << " contains " << allKeys->size() << " pixels" << endl;
+    cout << "cluster " << clusterID << " contains " << clusterKeys->size() << " pixels" << endl;
     
     int pixelsWritten = 0;
     
-    for ( ClusterVector &pt : *allKeys ) {
+    for ( ClusterVector &pt : *clusterKeys ) {
       FP x = pt[0];
       FP y = pt[1];
       FP z = pt[2];

@@ -167,13 +167,18 @@ namespace Gvm {
     //
     // m : the mass at the point
     // pt : the coordinates of the point
-    // key : the key assigned to the point (can be nullptr).
-    // Note that this ref is not a unique_ptr
-    // or a shared_ptr, the lifetime of this
-    // pointer must be managed by the caller.
+    // key : the key associated with a specific
+    // point is typically a vector that contains
+    // a value specific to the point. The lifetime
+    // of the key object is not managed by the library,
+    // the caller will typically pass in a tmp value
+    // allocated on the stack. The key can be nullptr.
     
-    void add(FP m, V &pt, K* key) {
+    void add(FP m, V &pt, K *key) {
       if (m == FP(0.0)) return; //nothing to do
+      
+      GvmKeyer<S,V,K,FP>* const keyer = getKeyer();
+      
       if (count < capacity) { //shortcut
         //TODO should prefer add if var comes to zero
         
@@ -185,7 +190,7 @@ namespace Gvm {
         GvmCluster<S,V,K,FP> &cluster = *(newClusterPtr.get());
         cluster.set(m, pt);
         addPairs();
-        cluster.key = getKeyer()->addKey(cluster, key);
+        cluster.setKey(keyer->addKey(cluster, key));
         count++;
         bound = count;
       } else {
@@ -209,7 +214,7 @@ namespace Gvm {
           GvmCluster<S,V,K,FP> &additionC = *additionCPtr;
           additionC.add(m, pt);
           updatePairs(additionC);
-          additionC.key = getKeyer()->addKey(additionC, key);
+          additionC.setKey(keyer->addKey(additionC, key));
         } else {
           //choose merge
           GvmClusterPair<S,V,K,FP> &mergePair = *mergePairPtr;
@@ -219,14 +224,14 @@ namespace Gvm {
             c1 = c2;
             c2 = &mergePair.c1;
           }
-          c1->key = getKeyer()->mergeKeys(*c1, *c2);
+          c1->setKey(keyer->mergeKeys(*c1, *c2));
           c1->add(*c2);
           updatePairs(*c1);
           c2->set(m, pt);
           updatePairs(*c2);
           //TODO should this pass through a method on keyer?
-          c2->key = nullptr;
-          c2->key = getKeyer()->addKey(*c2, key);
+          c2->setKey(nullptr);
+          c2->setKey(keyer->addKey(*c2, key));
         }
       }
       additions++;
@@ -256,6 +261,7 @@ namespace Gvm {
         totalMass += cluster.m0;
       }
       
+      GvmKeyer<S,V,K,FP>* const keyer = getKeyer();
       while (count > minClusters) {
         if (count == 1) {
           //remove the last cluster
@@ -282,7 +288,7 @@ namespace Gvm {
             totalVar += diff;
             if (totalVar/totalMass > maxVar) break; //stop here, we are going to exceed maximum
           }
-          c1->key = getKeyer()->mergeKeys(*c1, *c2);
+          c1->setKey(keyer->mergeKeys(*c1, *c2));
           c1->add(*c2);
           updatePairs(*c1);
           removePairs(*c2);

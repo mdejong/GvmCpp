@@ -66,31 +66,33 @@ namespace Gvm {
     // The computed variance of this cluster.
     
     FP var;
-
-    // The key associated with this cluster (can be nullptr).
-    // Note that this ref is not a unique_ptr
-    // or a shared_ptr, the lifetime of this
-    // pointer must be managed by the caller.
     
-    K* key;
+    // A cluster contains N keys which are typically
+    // plain values inside a vector. But, the keys could
+    // be any templated type that supports collecting
+    // values in some user defined way. The key class must
+    // support a default constructor and a copy constructor.
+    
+    K* keyPtr;
+    
+    // When a cluster is set to a collection of keys then
+    // this vector will be populated with a copy of the
+    // values of the keys collection. Note that keyPtr
+    // will be set to the address of keyVec when values
+    // have been inserted into keyVec.
+    
+    K keyVec;
     
     // constructor
     
     GvmCluster<S,V,K,FP>(GvmClusters<S,V,K,FP> &inClusters)
-    : clusters(inClusters), removed(false), m0(0.0), var(0.0), key(nullptr)
+    : clusters(inClusters), removed(false), m0(0.0), var(0.0), keyPtr(nullptr), keyVec()
     {
       removed = false;
       count = 0;
       m0 = FP(0.0);
       m1 = clusters.space.newOrigin();
       m2 = clusters.space.newOrigin();
-      
-      // FIXME: how many pairs for each cluster ?
-      // If 2048 clusters and each one has 2048
-      // pairs as initial capacity, then that is
-      // (2048 * 8) bytes for null pointers.
-      // 16384 = 16 kB for 1 cluster
-      // 4 megs ?
       
       pairs.reserve(clusters.capacity);
       for (int i=0; i < clusters.capacity; i++) {
@@ -123,7 +125,30 @@ namespace Gvm {
     // The key associated with the cluster, may be nullptr.
     
     K* getKey() {
-      return key;
+      return keyPtr;
+    }
+    
+    // When a key is added to a vector or keys are merged then
+    // this method is invoked.
+    
+    void setKey(K *aKey) {
+      if (aKey == nullptr) {
+        // Release any held ids at this point
+        keyPtr = nullptr;
+        // Invoke default constructor
+        keyVec = K();
+      } else if (keyPtr == aKey) {
+        // Passed the current key vector pointer, which
+        // is a nop since a combine operation would have
+        // already appended new keys to the vector.
+      } else {
+#if defined(DEBUG)
+        assert(keyVec.size() == 0);
+#endif // DEBUG
+        // Invoke copy constructor to fill key vec
+        keyVec = K(*aKey);
+        keyPtr = &keyVec;
+      }
     }
     
     // package methods
@@ -137,7 +162,7 @@ namespace Gvm {
       clusters.space.setToOrigin(m1);
       clusters.space.setToOrigin(m2);
       var = FP(0.0);
-      key = nullptr;
+      setKey(nullptr);
     }
     
     // Sets this cluster equal to a single point.

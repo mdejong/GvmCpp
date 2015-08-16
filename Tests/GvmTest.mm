@@ -248,14 +248,6 @@ using namespace Gvm;
   points[1] = p3[1];
   listOfPoints.push_back(points);
   
-  // Insert each point into clusters. Each point is
-  // associated with a list of points called a "key".
-  // This key object lifetime must be managed by the caller
-  // for performance reasons.
-  
-  vector<ClusterKey> allKeys;
-  allKeys.reserve(listOfPoints.size());
-  
   // Install key combiner for list of points, caller must manage ptr lifetime
   
   GvmListKeyer<ClusterVectorSpace, ClusterVector, ClusterKey, FP> intListKeyer;
@@ -263,10 +255,9 @@ using namespace Gvm;
   
   for ( ClusterVector & pt : listOfPoints ) {
     // Key is a list of (list of points)
-    allKeys.push_back(ClusterKey ());
-    ClusterKey *key = &allKeys[allKeys.size() - 1];
-    key->push_back(pt);
-    clusters.add(1, pt, key);
+    ClusterKey key;
+    key.push_back(pt);
+    clusters.add(1, pt, &key);
   }
   
   // There are 256 possible cluster array slots
@@ -302,7 +293,7 @@ using namespace Gvm;
 # define FP double
 # define ClusterVector GvmStdVector<FP,3>
 # define ClusterVectorSpace GvmVectorSpace<ClusterVector,FP,3>
-# define ClusterKey void
+# define ClusterKey vector<int>
   
   ClusterVectorSpace vspace;
   
