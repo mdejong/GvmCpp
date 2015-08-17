@@ -62,45 +62,92 @@ namespace Gvm {
     // Pairs is an array of pointers to GvmClusterPair objects.
     // This data structure makes it easy to move an item
     // allocated on the heap around in the array without having
-    // to copy the object data. The shared refs means that
-    // GvmClusters can also hold refs to these same pair objects.
+    // to copy the object data which is critical for performance.
     
-    std::vector<std::shared_ptr<GvmClusterPair<S,V,K,FP>> > pairs;
+    GvmClusterPair<S,V,K,FP> **pairs;
+    
+    // Cluster pairs are allocated as a solid block of (N * N) instances
+    // so that these pointers can be sorted and rearranged without use
+    // of shared_ptr for each cluster pair object.
+    
+    GvmClusterPair<S,V,K,FP> *pairsArray;
     
     int size;
-        
-    GvmClusterPairs<S,V,K,FP>(int initialCapacity)
-    : size(0)
+    
+    // The size of the pairs allocation. This size is defined at object
+    // construction time and cannot be changed during object lifetime
+    // for performance reasons.
+    
+    int capacity;
+    
+    // The number of pairsArray values that have been used.
+    
+    int pairsUsed;
+    
+    GvmClusterPairs<S,V,K,FP>(int inCapacity)
+    : size(0), capacity(inCapacity), pairsUsed(0)
     {
-      pairs.reserve(initialCapacity);
-      for (int i=0; i < initialCapacity; i++) {
-        pairs.push_back(nullptr);
+      // For N clusters, allocate solid block of (N * N) cluster pairs,
+      // this allocation represents a significant amount of the memory
+      // used by the library.
+      
+      assert(capacity > 0);
+      
+      pairsArray = new GvmClusterPair<S,V,K,FP>[capacity];
+      assert(pairsArray);
+      
+      if ((0)) {
+        fprintf(stdout, "alloc pairsArray of size %d bytes : 0x%p\n", (int)(capacity * sizeof(GvmClusterPair<S,V,K,FP>)), pairsArray);
       }
+      
+      // pairs is an array of pointers into pairsArray
+      // initialized to nullptr.
+      
+      pairs = new GvmClusterPair<S,V,K,FP>*[capacity]();
+      assert(pairs);
+      
+      if ((0)) {
+        fprintf(stdout, "alloc pairs of size %d bytes : 0x%p\n", (int)(capacity * sizeof(GvmClusterPair<S,V,K,FP>*)), pairs);
+      }
+      
       return;
     }
     
-    // Copy constructor
-    
-    GvmClusterPairs<S,V,K,FP>(GvmClusterPairs<S,V,K,FP> &that) {
-      pairs = that.pairs;
-      size = pairs.length;
+    ~GvmClusterPairs<S,V,K,FP>() {
+      if ((0)) {
+        fprintf(stdout, "dealloc pairs 0x%p\n", pairs);
+      }
+      
+      delete [] pairs;
+      
+      if ((0)) {
+        fprintf(stdout, "dealloc pairsArray 0x%p\n", pairsArray);
+      }
+      
+      delete [] pairsArray;
     }
     
-    void add(std::shared_ptr<GvmClusterPair<S,V,K,FP> > &pair) {
+    // Copy constructor explicitly deleted
+
+    GvmClusterPairs<S,V,K,FP>(GvmClusterPairs<S,V,K,FP> &that) = delete;
+    GvmClusterPairs<S,V,K,FP>(const GvmClusterPairs<S,V,K,FP> &that) = delete;
+    
+    // Operator= explicitly deleted
+    
+    GvmClusterPairs<S,V,K,FP>& operator=(GvmClusterPairs<S,V,K,FP>& x) = delete;
+    GvmClusterPairs<S,V,K,FP>& operator=(const GvmClusterPairs<S,V,K,FP>& x) = delete;
+    
+    // add() should be passed a pair pointer returned by newSharedPair.
+    
+    void add(GvmClusterPair<S,V,K,FP> *pair) {
       int i = size;
       
-      // This grow() logic does not get invoked at runtime since
-      // the number of cluster pairs is defined as the largest
-      // possible size of N^2. Because the grow() logic is in
-      // the critical runtime path in add() removal of the
-      // logic provides for better inlining performance.
-
-      //if (i >= pairs.size()) {
-      //  grow(i + 1);
-      //}
+      // Note that grow() logic is not supported here since the object
+      // uses a fixed max size for pairs so that this add() method
+      // can execute a more optimal execution path.
       
 #if defined(DEBUG)
-      if (i >= pairs.size()) {
+      if (i >= capacity) {
         assert(0);
       }
 #endif // DEBUG
@@ -108,7 +155,7 @@ namespace Gvm {
       size = i + 1;
       if (i == 0) {
         pairs[0] = pair;
-        pair.get()->index = 0;
+        pair->index = 0;
       } else {
         heapifyUp(i, pair);
       }
@@ -117,34 +164,36 @@ namespace Gvm {
     
     // add cluster pair and return ref to shared pair object that was just added
     
-    std::shared_ptr<GvmClusterPair<S,V,K,FP>>
+    GvmClusterPair<S,V,K,FP>*
     newSharedPair(GvmCluster<S,V,K,FP> &c1, GvmCluster<S,V,K,FP> &c2) {
-      auto newPairPtr = std::make_shared<GvmClusterPair<S,V,K,FP> >(c1, c2);
-      return newPairPtr;
+      assert(pairsUsed <= (capacity-1));
+      GvmClusterPair<S,V,K,FP> *pairPtr = &pairsArray[pairsUsed];
+      pairsUsed++;
+      pairPtr->set(&c1, &c2);
+      return pairPtr;
     }
 
     GvmClusterPair<S,V,K,FP>* peek() {
-      return size == 0 ? nullptr : pairs[0].get();
+      return size == 0 ? nullptr : pairs[0];
     }
     
-    bool remove(std::shared_ptr<GvmClusterPair<S,V,K,FP> > &pair) {
+    bool remove(GvmClusterPair<S,V,K,FP> *pair) {
       int i = indexOf(pair);
       if (i == -1) return false;
       removeAt(i);
       return true;
     }
     
-    void reprioritize(std::shared_ptr<GvmClusterPair<S,V,K,FP> > &pair) {
-      GvmClusterPair<S,V,K,FP> &pairObj = *(pair.get());
+    void reprioritize(GvmClusterPair<S,V,K,FP> *pair) {
       int i = indexOf(pair);
 #if defined(DEBUG)
       if (i == -1) {
         assert(0);
       }
 #endif // DEBUG
-      pairObj.update();
-      std::shared_ptr<GvmClusterPair<S,V,K,FP> > *parent = (i == 0) ? nullptr : &pairs[ ushift_right(i - 1) ];
-      if (parent != nullptr && parent->get()->value > pairObj.value) {
+      pair->update();
+      GvmClusterPair<S,V,K,FP> *parent = (i == 0) ? nullptr : pairs[ ushift_right(i - 1) ];
+      if (parent != nullptr && parent->value > pair->value) {
         heapifyUp(i, pair);
       } else {
         heapifyDown(i, pair);
@@ -157,32 +206,16 @@ namespace Gvm {
     
     void clear() {
       for (int i = 0; i < size; i++) {
-        GvmClusterPair<S,V,K,FP> &e = pairs[i];
-        e.index = -1;
+        GvmClusterPair<S,V,K,FP> *e = pairs[i];
+        e->index = -1;
         //pairs[i] = e;
       }
       size = 0;
     }
     
-    void grow(int minCapacity) {
-      if (minCapacity < 0) {
-        assert(0); // can't grow, maximum number of elements exceeded
-      }
-      int oldCapacity = (int) pairs.size();
-      int newCapacity = ((oldCapacity < 64)? ((oldCapacity + 1) * 2): ((oldCapacity / 2) * 3));
-      // Note that capacity here is limited to 32 bit signed int range
-      if (newCapacity < 0) newCapacity = std::numeric_limits<int32_t>::max();
-      if (newCapacity < minCapacity) newCapacity = minCapacity;
-      pairs.reserve(newCapacity);
-      for (int i=oldCapacity; i < newCapacity; i++) {
-        pairs.push_back(nullptr);
-      }
-      assert(pairs.size() == newCapacity);
-    }
-    
-    int indexOf(std::shared_ptr<GvmClusterPair<S,V,K,FP> > &pair) {
+    int indexOf(GvmClusterPair<S,V,K,FP> *pair) {
 #if defined(DEBUG)
-      assert(pair.get() != nullptr);
+      assert(pair != nullptr);
 #endif // DEBUG
       return pair->index;
     }
@@ -191,13 +224,13 @@ namespace Gvm {
       int s = --size;
       if (s == i) {
         // removing last element
-        pairs[i].get()->index = -1;
+        pairs[i]->index = -1;
         pairs[i] = nullptr;
       } else {
         // Move pair object from one array slot to another
-        std::shared_ptr<GvmClusterPair<S,V,K,FP> > moved = pairs[s];
+        GvmClusterPair<S,V,K,FP> *moved = pairs[s];
         pairs[s] = nullptr;
-        moved.get()->index = -1;
+        moved->index = -1;
         heapifyDown(i, moved);
         if (pairs[i] == moved) {
           heapifyUp(i, moved);
@@ -209,38 +242,38 @@ namespace Gvm {
       return;
     }
     
-    void heapifyUp(int k, std::shared_ptr<GvmClusterPair<S,V,K,FP> > &pair) {
-      auto pairValue = pair.get()->value;
+    void heapifyUp(int k, GvmClusterPair<S,V,K,FP> *pair) {
+      auto pairValue = pair->value;
       while (k > 0) {
         int parent = ushift_right(k - 1);
-        std::shared_ptr<GvmClusterPair<S,V,K,FP> > &e = pairs[parent];
-        if (pairValue >= e.get()->value) break;
+        GvmClusterPair<S,V,K,FP> *e = pairs[parent];
+        if (pairValue >= e->value) break;
         pairs[k] = e;
-        e.get()->index = k;
+        e->index = k;
         k = parent;
       }
       pairs[k] = pair;
-      pair.get()->index = k;
+      pair->index = k;
     }
     
-    void heapifyDown(int k, std::shared_ptr<GvmClusterPair<S,V,K,FP> > &pair) {
-      auto pairValue = pair.get()->value;
+    void heapifyDown(int k, GvmClusterPair<S,V,K,FP> *pair) {
+      auto pairValue = pair->value;
       int half = ushift_right(size);
       while (k < half) {
         int child = ushift_left(k) + 1;
-        std::shared_ptr<GvmClusterPair<S,V,K,FP> > *c = &pairs[child];
+        GvmClusterPair<S,V,K,FP> *c = pairs[child];
         int right = child + 1;
-        if (right < size && c->get()->value > pairs[right].get()->value) {
+        if (right < size && c->value > pairs[right]->value) {
           child = right;
-          c = &pairs[child];
+          c = pairs[child];
         }
-        if (pairValue <= c->get()->value) break;
-        pairs[k] = *c;
-        c->get()->index = k;
+        if (pairValue <= c->value) break;
+        pairs[k] = c;
+        c->index = k;
         k = child;
       }
       pairs[k] = pair;
-      pair.get()->index = k;
+      pair->index = k;
     }
     
   }; // end class GvmClusterPairs

@@ -181,7 +181,7 @@ namespace Gvm {
     // the caller will typically pass in a tmp value
     // allocated on the stack. The key can be nullptr.
     
-    void add(FP m, V &pt, K *key) {
+    void add(const FP m, V &pt, K *key) {
       if (m == FP(0.0)) return; //nothing to do
       
       GvmKeyer<S,V,K,FP>* const keyer = getKeyer();
@@ -259,13 +259,11 @@ namespace Gvm {
 #endif // DEBUG
           
           //choose merge
-          GvmClusterPair<S,V,K,FP> &mergePair = *mergePairPtr;
-          GvmCluster<S,V,K,FP> *c1 = &mergePair.c1;
-          GvmCluster<S,V,K,FP> *c2 = &mergePair.c2;
+          GvmCluster<S,V,K,FP> *c1 = mergePairPtr->c1;
+          GvmCluster<S,V,K,FP> *c2 = mergePairPtr->c2;
           if (c1->m0 < c2->m0) {
             c1 = c2;
-            c2 = &mergePair.c1;
-            
+            c2 = mergePairPtr->c1;
 #if defined(DEBUG)
             if (pointDebugOutput) {
               std::string ptStr = pt.toString();
@@ -332,12 +330,12 @@ namespace Gvm {
         } else {
           GvmClusterPair<S,V,K,FP> *mergePair = pairs.peek();
           assert(mergePair);
-          GvmCluster<S,V,K,FP> *c1 = &mergePair->c1;
-          GvmCluster<S,V,K,FP> *c2 = &mergePair->c2;
+          GvmCluster<S,V,K,FP> *c1 = mergePair->c1;
+          GvmCluster<S,V,K,FP> *c2 = mergePair->c2;
           
           if (c1->m0 < c2->m0) {
             c1 = c2;
-            c2 = &mergePair->c1;
+            c2 = mergePair->c1;
           }
           if (maxVar >= FP(0.0)) {
             FP diff = c1->test(*c2) - c1->var - c2->var;
@@ -381,7 +379,7 @@ namespace Gvm {
         int k = 0;
         for (int j = 0; j < bound-1;) {
           auto &pair = pairs[j];
-          bool lose = pair.get()->c1.removed || pair.get()->c2.removed;
+          bool lose = pair->c1->removed || pair->c2->removed;
           if (lose) {
             j++;
           } else {
@@ -445,7 +443,7 @@ namespace Gvm {
         int limit = bound - 1;
         for (int i = 0; i < limit; i++) {
           auto &pair = pairs[i];
-          if (pair.get()->c1.removed || pair.get()->c2.removed) continue;
+          if (pair->c1->removed || pair->c2->removed) continue;
           this->pairs.reprioritize(pair);
         }
       }
@@ -458,7 +456,7 @@ namespace Gvm {
       auto &pairs = cluster.pairs;
       for (int i = 0; i < bound-1; i++) {
         auto &pair = pairs[i];
-        if (pair.get()->c1.removed || pair.get()->c2.removed) continue;
+        if (pair->c1->removed || pair->c2->removed) continue;
         this->pairs.remove(pair);
       }
       

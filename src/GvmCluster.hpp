@@ -41,7 +41,7 @@ namespace Gvm {
     // The pairings of this cluster with all other clusters.
     // Note that this is a vector of pointers to cluster pairs.
     
-    std::vector<std::shared_ptr<GvmClusterPair<S,V,K,FP>> > pairs;
+    std::vector<GvmClusterPair<S,V,K,FP>* > pairs;
     
     // Whether this cluster is in the process of being removed.
     
@@ -189,7 +189,7 @@ namespace Gvm {
     // m : the mass of the point
     // pt : the coordinates of the point
     
-    void add(FP m, V &pt) {
+    void add(const FP m, V &pt) {
       if (count == 0) {
         set(m, pt);
       } else {
