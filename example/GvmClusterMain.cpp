@@ -155,6 +155,12 @@ int main(int argc, char **argv) {
   
   clusters.setKeyer(&listKeyer);
   
+#if defined(DEBUG)
+  if ((1)) {
+    clusters.pointDebugOutput = fopen("clustering_point_debug.txt", "w");
+  }
+#endif // DEBUG
+  
   // Insert each point into clusters. Each point is
   // associated with a list of points called a "key".
   

@@ -95,6 +95,10 @@ namespace Gvm {
     
     int bound;
     
+#if defined(DEBUG)
+    FILE *pointDebugOutput;
+#endif // DEBUG
+    
     // constructor
     
     GvmClusters<S,V,K,FP>(S inSpace, int inCapacity)
@@ -113,6 +117,9 @@ namespace Gvm {
       for (int i=0; i < capacity; i++) {
         clusters.push_back(nullptr);
       }
+#if defined(DEBUG)
+      pointDebugOutput = nullptr;
+#endif // DEBUG
     }
     
     // The keyer used to assign keys to clusters.
@@ -182,6 +189,13 @@ namespace Gvm {
       if (count < capacity) { //shortcut
         //TODO should prefer add if var comes to zero
         
+#if defined(DEBUG)
+        if (pointDebugOutput) {
+          std::string ptStr = pt.toString();
+          fprintf(pointDebugOutput, "add to cluster[%d] for point %s\n", additions, ptStr.c_str());
+        }
+#endif // DEBUG
+        
         auto newClusterPtr = std::make_shared<GvmCluster<S,V,K,FP> >(*this);
 #if defined(DEBUG)
         assert(clusters[additions] == nullptr);
@@ -197,9 +211,20 @@ namespace Gvm {
         //identify cheapest merge
         GvmClusterPair<S,V,K,FP> *mergePairPtr = pairs.peek();
         FP mergeT = mergePairPtr == nullptr ? std::numeric_limits<FP>::max() : mergePairPtr->value;
+        
+#if defined(DEBUG)
+        if (pointDebugOutput) {
+          std::string ptStr = pt.toString();
+          fprintf(pointDebugOutput, "merge threshold is %0.16f with %d clusters\n", mergeT, count);
+        }
+#endif // DEBUG
+        
         //find cheapest addition
         GvmCluster<S,V,K,FP> *additionCPtr = nullptr;
         FP additionT = std::numeric_limits<FP>::max();
+#if defined(DEBUG)
+        int additionI = 0;
+#endif // DEBUG
         for (int i = 0; i < clusters.size(); i++) {
           auto &clusterSharedPtr = clusters[i];
           GvmCluster<S,V,K,FP> *clusterPtr = clusterSharedPtr.get();
@@ -207,15 +232,32 @@ namespace Gvm {
           if (t < additionT) {
             additionCPtr = clusterPtr;
             additionT = t;
+#if defined(DEBUG)
+            additionI = i;
+#endif // DEBUG
           }
         }
         if (additionT <= mergeT) {
+#if defined(DEBUG)
+          if (pointDebugOutput) {
+            std::string ptStr = pt.toString();
+            fprintf(pointDebugOutput, "cheapest add is %0.16f for cluster[%d] and point %s\n", additionT, additionI, ptStr.c_str());
+          }
+#endif // DEBUG
+          
           //choose addition
           GvmCluster<S,V,K,FP> &additionC = *additionCPtr;
           additionC.add(m, pt);
           updatePairs(additionC);
           additionC.setKey(keyer->addKey(additionC, key));
         } else {
+#if defined(DEBUG)
+          if (pointDebugOutput) {
+            std::string ptStr = pt.toString();
+            fprintf(pointDebugOutput, "cheapest merge is %0.16f for cluster[%d] and point %s\n", additionT, additionI, ptStr.c_str());
+          }
+#endif // DEBUG
+          
           //choose merge
           GvmClusterPair<S,V,K,FP> &mergePair = *mergePairPtr;
           GvmCluster<S,V,K,FP> *c1 = &mergePair.c1;
@@ -223,6 +265,20 @@ namespace Gvm {
           if (c1->m0 < c2->m0) {
             c1 = c2;
             c2 = &mergePair.c1;
+            
+#if defined(DEBUG)
+            if (pointDebugOutput) {
+              std::string ptStr = pt.toString();
+              fprintf(pointDebugOutput, "merge c2 <- c1 : N keys %d <- %d\n", (int)c1->keyVec.size(), (int)c2->keyVec.size());
+            }
+#endif // DEBUG
+          } else {
+#if defined(DEBUG)
+            if (pointDebugOutput) {
+              std::string ptStr = pt.toString();
+              fprintf(pointDebugOutput, "merge c1 <- c2: N keys %d <- %d\n", (int)c2->keyVec.size(), (int)c1->keyVec.size());
+            }
+#endif // DEBUG
           }
           c1->setKey(keyer->mergeKeys(*c1, *c2));
           c1->add(*c2);
