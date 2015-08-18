@@ -114,7 +114,12 @@ vector<uint32_t> loadPixelsFromBGR(string filename)
 
 int main(int argc, char **argv) {
   
-  string filename = "/Users/modejong/Development/ImageCompression/GVMCluster/Lenna_int_order.yuv";
+  if (argc != 2) {
+    fprintf(stderr, "usage gvm_cluster_yuv YUV\n");
+    exit(1);
+  }
+  
+  string filename = argv[1];
 
   // Using float instead of double cuts memory usage down just a bit, like 10%
   
