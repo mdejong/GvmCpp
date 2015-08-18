@@ -161,7 +161,7 @@ int main(int argc, char **argv) {
   clusters.setKeyer(&listKeyer);
   
 #if defined(DEBUG)
-  if ((1)) {
+  if ((0)) {
     clusters.pointDebugOutput = fopen("clustering_point_debug.txt", "w");
   }
 #endif // DEBUG

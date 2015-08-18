@@ -839,7 +839,7 @@ void process_file(PngContext *cxt)
   clusters.setKeyer(&listKeyer);
   
 #if defined(DEBUG)
-  if ((1)) {
+  if ((0)) {
     clusters.pointDebugOutput = fopen("clustering_point_debug.txt", "w");
   }
 #endif // DEBUG
@@ -881,6 +881,19 @@ void process_file(PngContext *cxt)
     clusteri++;
   }
   
+  // Resort cluster in terms of shortest distance from one cluster center to the next
+  // to implement a cluster sort order.
+  
+  vector<uint32_t> clusterCenterPixels = get_cluster_centers<ClusterKey, vector<GvmResult<ClusterVectorSpace, ClusterVector, ClusterKey, FP>>>(results);
+  
+  //  for ( uint32_t pixel : clusterCenterPixels ) {
+  //    printf("center pixel 0x%08X\n", pixel);
+  //  }
+  
+  // Generate cluster to cluster walk (sort) order
+  
+  vector<uint32_t> sortedOffsets = generate_cluster_walk_on_center_dist(clusterCenterPixels);
+  
   // Write clustered pixels and PNG image with N pixels in rows of at least 256
   
   int totalPixelsWritten = 0;
@@ -899,7 +912,8 @@ void process_file(PngContext *cxt)
   
   {
     for (int i = 0; i < results.size(); i++) {
-      ClusterKey *clusterKeys = results[i].getKey();
+      int si = (int) sortedOffsets[i];
+      ClusterKey *clusterKeys = results[si].getKey();
       
       int N = (int) clusterKeys->size();
       
@@ -930,7 +944,8 @@ void process_file(PngContext *cxt)
   uint32_t outPixelsi = 0;
   
   for (int i = 0; i < results.size(); i++) {
-    ClusterKey *clusterKeys = results[i].getKey();
+    int si = (int) sortedOffsets[i];
+    ClusterKey *clusterKeys = results[si].getKey();
     
     int pixelsWritten = 0;
     
@@ -978,23 +993,7 @@ void process_file(PngContext *cxt)
 
   PngContext_dealloc(&cxt2);
   
-  // Resort cluster in terms of shortest distance from one cluster center to the next
-  // to implement a cluster sort order.
-  
-  vector<uint32_t> clusterCenterPixels = get_cluster_centers<ClusterKey, vector<GvmResult<ClusterVectorSpace, ClusterVector, ClusterKey, FP>>>(results);
-  
-//  for ( uint32_t pixel : clusterCenterPixels ) {
-//    printf("center pixel 0x%08X\n", pixel);
-//  }
-
-  // Generate cluster to cluster walk (sort) order
-  
-  vector<uint32_t> sortedOffset = generate_cluster_walk_on_center_dist(clusterCenterPixels);
-  
-  // Combine pixels into a flat array of pixels and emit as image
-  // with 256 columns.
-  
-  // Combine all cluster rows into a flat array of pixels in color group sorted order
+  // Combine sorted pixels into a flat array of pixels and emit as image with 256 columns
   
   PngContext cxt3;
   PngContext_init(&cxt3);
@@ -1003,7 +1002,7 @@ void process_file(PngContext *cxt)
   allPixels.clear();
   
   for (int i = 0; i < results.size(); i++) {
-    uint32_t si = sortedOffset[i];
+    int si = (int) sortedOffsets[i];
     ClusterKey *clusterKeys = results[si].getKey();
     
     for ( uint32_t pixel : *clusterKeys ) {
