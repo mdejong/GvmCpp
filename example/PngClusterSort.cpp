@@ -382,6 +382,125 @@ void read_png_file(char* file_name, PngContext *cxt)
   free_row_pointers(cxt);
 }
 
+double clampByte(double d) {
+  if (d < 0.0) {
+    d = 0.0;
+  } else if (d > 255.0) {
+    d = 255.0;
+  }
+  return d;
+}
+
+// Given a vector of pixels and a pixel that may or may not be in the vector, return
+// the pixel in the vector that is closest to the indicated pixel.
+
+uint32_t closestToPixel(const vector<uint32_t> &pixels, const uint32_t closeToPixel) {
+  const bool debug = false;
+  
+#if defined(DEBUG)
+  assert(pixels.size() > 0);
+#endif // DEBUG
+  
+  unsigned int minDist = (~0);
+  uint32_t closestToPixel = 0;
+  
+  uint32_t cB = closeToPixel & 0xFF;
+  uint32_t cG = (closeToPixel >> 8) & 0xFF;
+  uint32_t cR = (closeToPixel >> 16) & 0xFF;
+  
+  for ( uint32_t pixel : pixels ) {
+    uint32_t B = pixel & 0xFF;
+    uint32_t G = (pixel >> 8) & 0xFF;
+    uint32_t R = (pixel >> 16) & 0xFF;
+    
+    int dB = (int)cB - (int)B;
+    int dG = (int)cG - (int)G;
+    int dR = (int)cR - (int)R;
+    
+    unsigned int d3 = (unsigned int) ((dB * dB) + (dG * dG) + (dR * dR));
+    
+    if (debug) {
+      cout << "d3 from (" << B << "," << G << "," << R << ") to closeToPixel (" << cB << "," << cG << "," << cR << ") is (" << dB << "," << dG << "," << dR << ") = " << d3 << endl;
+    }
+    
+    if (d3 < minDist) {
+      closestToPixel = pixel;
+      minDist = d3;
+      
+      if ((debug)) {
+        fprintf(stdout, "new    closestToPixel 0x%08X\n", closestToPixel);
+      }
+      
+      if (minDist == 0) {
+        // Quit the loop once a zero distance has been found
+        break;
+      }
+    }
+  }
+  
+  if ((debug)) {
+    fprintf(stdout, "return closestToPixel 0x%08X\n", closestToPixel);
+  }
+  
+  return closestToPixel;
+}
+
+// Iterate over clusters and determine the cluster center pixel
+
+template<typename K,typename R>
+vector<uint32_t> get_cluster_centers(R &resultVec) {
+  vector<uint32_t> clusterCenterPixels;
+  
+  // In DEBUG mode, do extra checking to make sure that no 2 clusters contain the same pixel
+  // to prevent a possible case where the closest to cluster center pixel for two different
+  // clusters is the same pixel.
+  
+#if defined(DEBUG)
+  unordered_map<uint32_t, uint32_t> allPixelsClusterOffset;
+#endif // DEBUG
+  
+  uint32_t clusteri = 0;
+  
+  for (int i = 0; i < resultVec.size(); i++) {
+    auto &result = resultVec[i];
+    K *cluster = result.getKey();
+  
+#if defined(DEBUG)
+    for ( uint32_t pixel : *cluster ) {
+      assert(allPixelsClusterOffset.count(pixel) == 0);
+      allPixelsClusterOffset[pixel] = clusteri;
+    }
+#endif // DEBUG
+
+    double Bd = round(result.point[0]);
+    double Gd = round(result.point[1]);
+    double Rd = round(result.point[2]);
+    
+    Bd = clampByte(Bd);
+    Gd = clampByte(Gd);
+    Rd = clampByte(Rd);
+    
+    uint32_t Bb = Bd;
+    uint32_t Gb = Gd;
+    uint32_t Rb = Rd;
+    
+    uint32_t comPixel = (Rb << 16) | (Gb << 8) | Bb;
+    uint32_t closestToCenterOfMassPixel = closestToPixel(*cluster, comPixel);
+    
+#if defined(DEBUG)
+    // The center of mass pixel should already have been seen above
+    assert(allPixelsClusterOffset.count(closestToCenterOfMassPixel) > 0);
+    assert(allPixelsClusterOffset[closestToCenterOfMassPixel] == clusteri);
+#endif // DEBUG
+    
+    // Force 24BPP cluster centers
+    
+    clusterCenterPixels.push_back(closestToCenterOfMassPixel & 0x00FFFFFF);
+    clusteri += 1;
+  }
+  
+  return clusterCenterPixels;
+}
 
 void write_png_file(char* file_name, PngContext *cxt)
 {
@@ -563,7 +682,7 @@ void process_file(PngContext *cxt)
   typedef vector<uint32_t> ClusterKey;
   
 #if defined(DEBUG)
-  checkForDuplicates(allPixels, 0xFF000000);
+  checkForDuplicates(allPixels, 0);
 #endif // DEBUG
   
   printf("found %d unique pixels in input image\n", (int)allPixels.size());
@@ -724,6 +843,15 @@ void process_file(PngContext *cxt)
 
   PngContext_dealloc(&cxt2);
   
+  // Resort cluster in terms of shortest distance from one cluster center to the next
+  // to implement a cluster sort order.
+  
+  vector<uint32_t> clusterCenterPixels = get_cluster_centers<ClusterKey, vector<GvmResult<ClusterVectorSpace, ClusterVector, ClusterKey, FP>>>(results);
+  
+  for ( uint32_t pixel : clusterCenterPixels ) {
+    printf("center pixel 0x%08X\n", pixel);
+  }
+  
   // Combine pixels into a flat array of pixels and emit as image
   // with 256 columns.
   
@@ -742,6 +870,8 @@ void process_file(PngContext *cxt)
       allPixels.push_back(pixel);
     }
   }
+  
+  checkForDuplicates(allPixels, 0);
 
   numRows = (int)allPixels.size() / 256;
   if (((int)allPixels.size() % 256) != 0) {
