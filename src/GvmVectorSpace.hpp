@@ -170,7 +170,7 @@ namespace Gvm {
 
     // FIXME: make optimized versions of functions below
     
-    FP variance(FP m, V &pt, V &ptSqr) {
+    FP variance(const FP m, const V &pt, const V &ptSqr) {
       FP sum = FP(0.0);
       const FP mMult = FP(1.0) / m;
       for (int i = 0; i < D; i++) {
@@ -180,7 +180,7 @@ namespace Gvm {
       return sum;
     }
 
-    FP variance(FP m1, V &pt1, V &ptSqr1, FP m2, V &pt2) {
+    FP variance(const FP m1, const V &pt1, const V &ptSqr1, const FP m2, const V &pt2) {
       const FP m0 = m1 + m2;
       const FP m0Mult = FP(1.0) / m0;
       FP sum = FP(0.0);
@@ -192,8 +192,8 @@ namespace Gvm {
       }
       return sum;
     }
-
-    FP variance(FP m1, V &pt1, V &ptSqr1, FP m2, V &pt2, V &ptSqr2) {
+    
+    FP variance(const FP m1, const V &pt1, const V &ptSqr1, const FP m2, const V &pt2, const V &ptSqr2) {
       const FP m0 = m1 + m2;
       const FP m0Mult = FP(1.0) / m0;
       FP sum = FP(0.0);

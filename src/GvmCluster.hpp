@@ -247,7 +247,7 @@ namespace Gvm {
     // pt the coordinates of the point
     // return the variance of this cluster inclusive of the point
     
-    FP test(FP m, V &pt) {
+    FP test(const FP m, const V &pt) {
       return m0 == FP(0.0) && m == FP(0.0) ? FP(0.0) : clusters.space.variance(m0, m1, m2, m, pt) - var;
     }
     
